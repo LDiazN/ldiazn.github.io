@@ -1,0 +1,21 @@
+- name: PostgresSQL
+  percentage: 80
+  color: 
+
+- name: Django
+  percentage: 85
+  color: 
+
+- name: GCP
+  percentage: 50
+  color: 
+
+- name: GNU/Linux
+  percentage: 90
+  color: 
+
+- name: Docker
+  percentage: 60
+  color: 
+
+
