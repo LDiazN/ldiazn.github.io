@@ -8,7 +8,7 @@ weight: 3
 # **About Me**
 
 Hi I am **{{ site.author.name }}** :wave:,<br>
-I am a **computer engineering** student graduating in Q1 2023 with a passion for game development and entertainment technology. I am proficient in modern **C++** and have experience with **real-time mesh slicing** in **C\#** with **Unity**. I have also created a **ray tracer** and have participated in the **Global Game Jam** in my country. I am particularly interested in **engine**, **graphics**, and **gameplay programming**. I am excited to work on ambitious new projects in game development to create new, useful tools for artists that help them create the best possible games.
+I am a **computer engineering** student who will be graduating in Q1 2023 with a passion for **game development** and entertainment technology. I love coding in **C++**, **C#**, and **Rust** for game development and **graphics programming** related subjects. Additionally, I am interested in **machine learning** and **backend** development, as I have work experience in those areas. I participate in the Global Game Jam in my country ~~almost~~ every year. I am particularly interested in **engine**, **graphics**, and **gameplay programming**. I am always happy to learn and share the projects I am working on!
 
 <div class="row">
 {% include about/skills.html title="Programming Languages" source=site.data.programming-skills %}
