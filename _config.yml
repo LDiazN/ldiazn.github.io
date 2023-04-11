@@ -19,12 +19,13 @@ nav_exclude:                                            # The following paths ar
   - pages/tags.html
   - pages/404.html
   - pages/index.md
+  - pages/blog.html
 
 
 ### Author Info ###
 author:
   name              : Luis Diaz
-  image             : https://i.imgur.com/3qKlkCV.jpeg
+  image             : https://avatars.githubusercontent.com/u/41093870?s=400&u=d3797e4fc20059dbd5d313c03a34e21cdaac322c&v=4
   # behance           : your_username
 # dribbble          : your_username
   email             : ldiazn98@gmail.com

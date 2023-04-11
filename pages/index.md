@@ -7,4 +7,3 @@ remote_projects:
 ---
 
 {% include landing.html %}
-{% include projects/index.html %}
