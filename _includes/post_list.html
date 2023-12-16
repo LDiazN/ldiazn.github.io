@@ -1,0 +1,20 @@
+{% if site.posts.size > 0 %}
+  <ul class="post-list">
+    {% for post in site.posts %}
+      <li class="post-list-item">
+        <span><strong><a href="{{ post.url | relative_url }}">{{ post.title }}</a> </strong> <span class="home-date">
+          {{ post.date | date: site.theme_config.date_format }}
+        </span></span>
+        <small>{{post.excerpt}}</small>
+
+        {% if forloop.index >= site.theme_config.home_blogs_limit and include.limit=="true" %}
+          {% break %}
+        {% endif %}
+
+        {% unless forloop.last %}
+        <div class="dashed"></div>
+        {% endunless %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}

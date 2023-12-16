@@ -1,0 +1,12 @@
+---
+layout: default
+---
+
+<header>
+  {% include horizontal_list.html collection=site.data.home.navbar_entries %}
+  <div class="dashed"></div>
+  <h1>Portfolio</h1>
+</header>
+
+{% include big_card.html item=site.data.projects.highlight %}
+{% include card_list.html collection=site.data.projects.entries %}

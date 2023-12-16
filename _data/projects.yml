@@ -1,0 +1,36 @@
+entries: 
+  - title: Project 1
+    url: overview-post
+    desc: This is an example project, configured in _data/home.yml
+
+  - title: Project 2
+    url: overview-post
+    desc: Projects are shown in card layout
+
+  - title: Project 3
+    url: overview-post
+    desc: You can control visibility from _config.yml file
+
+  - title: Project 4
+    url: overview-post
+    desc: This project uses highlight markup, configured in _data/home.yml
+    highlight: WIP
+
+  - title: Project 5
+    url: overview-post
+    desc: Moonwalk also has horizontal list (used in header and footer)
+    highlight: WIP
+
+  - title: Project 6
+    url: overview-post
+    desc: It also has a scalable vertical list (in case you need it)
+
+highlight:
+  title: Armor Blasting
+  url: https://github.com/LDiazN/ArmorBlasting
+  desc: This is the coolest project I have
+  img: https://user-images.githubusercontent.com/41093870/257398116-ddd9b1ce-a067-4fad-af30-46312bd93ec7.gif
+  img_alt: A gif of an FPS game where the player is shooting a robot, blasting its armor
+  tags:
+    - ue4
+    - fps

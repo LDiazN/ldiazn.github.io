@@ -1,0 +1,17 @@
+<div class="card-big">
+    <a href="{{ include.item.url }}" style="text-decoration: none;" target="_blank">
+        <img src="{{ include.item.img }}" alt="{{include.item.img_alt}}">
+        <span class="header">
+        {{ include.item.title }}
+
+        {% for tag in include.item.tags %}
+            <mark>{{tag}}</mark>
+        {% endfor %}
+        </span>
+
+        <hr/>
+        <p class="body">
+        {{ include.item.desc }}
+        </p>
+    </a>
+</div>
