@@ -28,7 +28,8 @@ entries:
 highlight:
   title: Armor Blasting
   url: https://github.com/LDiazN/ArmorBlasting
-  desc: This is the coolest project I have
+  desc: Shoot at the armored robot to blast its armor and see through it! In this <strong>UE4 project</strong> I showcase dynamic damage over meshes triggered by 
+        player attacks in real time, achieving a very satisfying feeling of impact for the guns! Check the code on <strong> Github </strong>!
   img: https://user-images.githubusercontent.com/41093870/257398116-ddd9b1ce-a067-4fad-af30-46312bd93ec7.gif
   img_alt: A gif of an FPS game where the player is shooting a robot, blasting its armor
   tags:
