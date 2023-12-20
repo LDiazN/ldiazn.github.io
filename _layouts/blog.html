@@ -9,3 +9,9 @@ layout: default
 </header>
 
 {% include post_list.html %}
+
+{% if site.theme_config.show_footer == true %}
+  <footer>
+    {% include horizontal_list.html collection=site.data.home.footer_entries %}
+  </footer>
+{% endif %}

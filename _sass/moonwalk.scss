@@ -179,6 +179,37 @@ mark {
 
 .post-list-item {
   list-style: none;
+  border-bottom: 1px var(--text) dashed;
+  padding-bottom: 0.5em;
+  display: flex;
+  width: 100%;
+
+  img {
+    border-radius: 0.5em;
+    border: 1px var(--text) solid;
+  }
+
+  .post-list-item-content
+  {
+    flex: 6; 
+    order: 1;
+
+    small {
+      line-height: 1.5em;
+    }
+  }
+
+  .post-list-item-thumbnail
+  {
+    flex: 1;
+
+    img
+    {
+      height: 5em; 
+      width: 5em; 
+      margin: 0 0;
+    }
+  }
 
 }
 .post-list-item  .home-date {
