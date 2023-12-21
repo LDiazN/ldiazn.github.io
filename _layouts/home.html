@@ -20,7 +20,9 @@ layout: default
   <a href="/projects" style="text-decoration: none;"><h2>{{ site.theme_config.home.title_projects }}</h2></a>
   Here are some of my most remarkable projects. You can see a full list 
   of my projects <a href="/projects">here!</a>
-  {% include big_card.html item=site.data.projects.highlight %}
+  <div class="highlight-container">
+    {% include big_card.html item=site.data.projects.highlight %}
+  </div>
   {% include card_list.html collection=site.data.projects.entries limit=site.theme_config.home.n_projects %}
 {% endif %}
 
