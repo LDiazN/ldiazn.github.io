@@ -1,0 +1,33 @@
+<ul class="horizontal-list">
+  {% for item in include.collection %}
+
+    <li class="card">
+      <a href="{{ item.url }}">
+        {% if item.img %}
+        <img src="{{ item.img  }}" alt="{{ item.img_alt  }}">
+        {% else  %}
+        <img src="/assets/images/alt-img-small.jpg" alt="{{ item.img_alt  }}">
+        {% endif %}
+      </a>
+      <a href="{{ item.url }}">
+        <span class="header">
+          {{ item.title }} <br>
+          {% for tag in item.tags %}
+            <mark>{{tag}}</mark>
+          {% endfor %}
+          
+        </span>
+      </a>
+      <hr />
+      {% if item.desc != false %}
+      <p class="body">
+        {{ item.desc }}
+      </p>
+      {% endif %}
+      <small>{{item.date}}</small>
+    </li>
+    {% if include.limit and forloop.index >= include.limit %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+</ul>
