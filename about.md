@@ -34,6 +34,66 @@ I created a news classifier tool using **Python** and **HuggingFace's transforme
 
 # Skills
 
+<div style="display: flex; justify-content: space-between;">
+    <div> 
+        <h3> Programming Languages </h3> 
+        <ul style="list-style-type: none; padding: 0;">
+            <li>
+            <strong> 5 years: </strong> Python
+            </li>
+            <li>
+            <strong> 4 years: </strong> C++
+            </li>
+            <li>
+            <strong> 3 years: </strong> Rust, C#, JavaScript
+            </li>
+            <li>
+            <strong> 2 years: </strong> Haskell
+            </li>
+            <li>
+            <strong> ≤ 1 years: </strong> Rust, C#, JavaScript
+            </li>
+        </ul>
+    </div>  
+    <div> 
+        <h3> Tech Stacks </h3> 
+        <div>
+        Bootstrap, HTML, CSS, <br> JQuery, Django, 
+        <br> Django Rest Framework, <br> PyTorch, OpenCV, Transformers, <br>
+        MediaPipe, StreamLit, <br> SQL (PostgreSQL), <br>
+        Google Cloud Platform (GCP), <br> Unix/Bash, Linux, Docker <br>
+        </div>
+    </div> 
+</div>
+
+<div style="display: flex; justify-content: space-between;">
+    <div> 
+        <h3> Gamedev </h3> 
+        <ul style="list-style-type: none; padding: 0;">
+            <li>
+            <strong> 3 years: </strong> Unity, Godot
+            </li>
+            <li>
+            <strong> 2 years: </strong> Unreal
+            </li>
+            <li>
+            <strong> ≤ 1 years: </strong> Computer Graphics
+            </li>
+        </ul>
+    </div>  
+    <div> 
+        <h3> Languages </h3> 
+        <ul style="list-style-type: none; padding: 0;">
+            <li>
+            <strong> Spanish: </strong> Native
+            </li>
+            <li>
+            <strong> English: </strong> Full professional proficiency
+            </li>
+        </ul>
+    </div> 
+</div>
+
 # Awards
 
 ### 2nd Place ICPC 2019
