@@ -8,7 +8,10 @@ layout: default
   <h1>Portfolio</h1>
 </header>
 
-{% include big_card.html item=site.data.projects.highlight %}
+<div class="hightlight-container">
+  {% include big_card.html item=site.data.projects.highlight %}
+</div>
+
 {% include card_list.html collection=site.data.projects.entries %}
 
 {% if site.theme_config.show_footer == true %}

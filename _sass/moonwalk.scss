@@ -39,7 +39,7 @@ li { margin: 0.4em 0; }
 
 table, th, td {
   width: 100%;
-  border: thin solid black;
+  border: thin solid var(--bg);
   border-collapse: collapse;
   padding: 0.4em;
 }

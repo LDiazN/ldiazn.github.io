@@ -2,7 +2,9 @@ title: Luis Diaz
 author: Luis Diaz
 url: https://ldiazn.github.io/ # root address of the site
 description: > # description of the site (multiple lines allowed)
-  Moonwalk is a fast and elegant Jekyll theme with a clean dark mode. It comes with horizontal list (for navbar and footer), card list (for portfolio), and a generic vertical list. It is very easy to modify in case you want to build over it - please see _layouts/home.html to do that.
+  Hi! My name is <strong> Luis Diaz </strong>, I'm a <strong>Computer Engineer</strong> and I'm passionate about science, technology, video games, visual arts and software engineering. 
+  I work professionally as a <strong> software developer </strong> and I'm also interested in Game Development, Computer Graphics, and 3D animation. Sometimes I also enjoy
+  writing about things I do and I find interesting. Visit my blog to learn more about my interests and explore my projects to see what I enjoy working on!
 
 permalink: /:slug
 

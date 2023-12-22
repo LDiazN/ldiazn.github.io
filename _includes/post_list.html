@@ -1,43 +1,44 @@
 {% if site.posts.size > 0 %}
   <ul class="post-list">
-    {% for post in site.posts %}
-      <li class="post-list-item"
-      
-      {% if (include.limit and forloop.index >= include.limit) or forloop.last </li> %}
-        style="border-bottom: 0px"
-      {% endif %}
-      
-      >
-        <div class="post-list-item-thumbnail">
-          {% if post.thumbnail %}
-            <img src="{{post.thumbnail}}" alt="post.thumbnail_alt">
-          {% else %}
-            <img src="/assets/images/alt-img-small.jpg" alt="Missing post thumbnail">
+      {% for post in site.posts %}
+        <li class="post-list-item"
+          {% if (include.limit and forloop.index >= include.limit) or forloop.last </li> %}
+            style="border-bottom: 0px"
           {% endif %}
-        </div>
-
-        <div class="post-list-item-content">
-          <span>
-            <strong><a href="{{ post.url | relative_url }}">{{ post.title }}</a></strong> 
-            <span class="home-date">
-              {{ post.date | date: site.theme_config.date_format }}
+        >
+          <div class="post-list-item-thumbnail">
+            {% if post.thumbnail %}
+              <img src="{{post.thumbnail}}" alt="post.thumbnail_alt">
+            {% else %}
+              <img src="/assets/images/alt-img-small.jpg" alt="Missing post thumbnail">
+            {% endif %}
+          </div>
+  
+          <div class="post-list-item-content">
+            <span>
+              <strong><a href="{{ post.url | relative_url }}">{{ post.title }}</a></strong> 
+              <span class="home-date">
+                {{ post.date | date: site.theme_config.date_format }}
+              </span>
             </span>
-          </span>
-          {% if post.description %}
-            <small>{{post.description}}</small>
-          {% else %}  
-            <small>{{post.excerpt}}</small>
+            {% if post.description %}
+              <small>{{post.description}}</small>
+            {% else %}  
+              <small>{{post.excerpt}}</small>
+            {% endif %}
+          </div>
+  
+          {% if include.limit and forloop.index >= include.limit %}
+            {% break %}
           {% endif %}
-        </div>
-
-        {% if include.limit and forloop.index >= include.limit %}
-          {% break %}
-        {% endif %}
-
-        {% unless forloop.last %}
-        <div class="dashed"></div>
-        {% endunless %}
-      </li>
-    {% endfor %}
-  </ul>
-{% endif %}
+  
+          {% unless forloop.last %}
+          <div class="dashed"></div>
+          {% endunless %}
+        </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <small>No entries for now!</small> <br>
+    
+  {% endif %}

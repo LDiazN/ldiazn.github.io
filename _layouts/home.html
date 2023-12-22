@@ -24,6 +24,7 @@ layout: default
     {% include big_card.html item=site.data.projects.highlight %}
   </div>
   {% include card_list.html collection=site.data.projects.entries limit=site.theme_config.home.n_projects %}
+  <small><a href="/projects">More projects!</a></small>
 {% endif %}
 
 {% if site.theme_config.show_misc_list == true %}

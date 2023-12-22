@@ -30,7 +30,12 @@ ul.horizontal-list {
   background-color: var(--bg-secondary);
   margin-bottom: 0.8em;
   border-radius: 0.5em;
-
+  line-height: 1.25em;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  
   .header {
     color: var(--links);
   }
@@ -46,6 +51,12 @@ ul.horizontal-list {
   img {
     border-radius: 0.5em;
     border: 1px var(--text) solid;
+  }
+
+  small 
+  {
+    color: var(--text-secondary);
+    font-size: 0.75em;
   }
 }
 
