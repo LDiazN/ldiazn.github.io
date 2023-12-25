@@ -6,7 +6,8 @@ tags: [C++, Computer Graphics]
 miniature: https://user-images.githubusercontent.com/41093870/236719650-20d13da5-8467-4892-9515-c463bc9fa52e.gif
 description: "En este articulo explico en gran detalle mi implementación del programa de Andy Sloane: <strong>donut.c</strong>. Hablaremos sobre las matemáticas, el código, y todo lo que necesitas saber para implementar un render de terminal sencillo"
 language: es
-repo: asdfasdfasdf
+repo: https://github.com/LDiazN/torus.cpp
+en_version: true
 ---
 <br>
 ![Toroide que gira en una terminal, usando arte ASCII](/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif)
