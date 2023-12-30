@@ -12,7 +12,7 @@ en_version: true
 <br>
 ![Toroide que gira en una terminal, usando arte ASCII](/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif)
 
-Este programa está inspirado en [donut.c](https://www.a1k0n.net/2011/07/20/donut-math.html) , un programa escrito en C por Andy Sloane. Su objetivo era renderizar una dona girando aleatoriamente en el espacio en la terminal usando C ofuscado, incluso su código tiene forma de dona:
+Este programa está inspirado en [donut.c](https://www.a1k0n.net/2011/07/20/donut-math.html) , un programa escrito en C por **Andy Sloane**. Su objetivo era renderizar una dona girando aleatoriamente en el espacio en la terminal usando C ofuscado, incluso su código tiene forma de dona:
 
 ```
              k;double sin()
@@ -83,8 +83,7 @@ while(true)
         cout << endl;  // Imprime el salto de línea que marca el final de la línea
     }
 
-    // Esto es necesario para forzar a la terminal a imprimir lo que tiene en 
-  // buffer
+    // Esto es necesario para forzar a la terminal a imprimir lo que tiene en buffer
     cout << flush;
 }
 ```
@@ -129,7 +128,7 @@ this_thread::sleep_for(chrono::milliseconds(30));
 - Escogemos **30** milisegundos porque si queremos 30 FPS, entonces cada iteración debería durar aproximadamente 0.030 (1/30) segundos  o 30 milisegundos. Para simplificar este programa asumiremos que el *main loop* siempre es instantáneo.
 - Esta línea se añade al final del ***main loop*** para garantizar que el programa espere un poco luego de haber impreso el fotograma actual
 
-Más adelante necesitaremos una forma de saber cuanto tiempo ha pasado desde el inicio de la aplicación para poder hacer operaciones que dependan del tiempo, por esta razón también usaremos una variable para acumular el tiempo que ha transcurrido desde el inicio.  Para eso, consideremos el siguiente fragmento de código:
+Más adelante necesitaremos una forma de saber cuanto tiempo ha pasado desde el inicio de la aplicación para poder hacer operaciones que dependan del tiempo, por esta razón también usaremos una variable para acumular el tiempo que ha transcurrido desde el inicio. Consideremos el siguiente fragmento de código:
 
 ```cpp
 // Main loop
@@ -142,7 +141,7 @@ while (true)
     auto now = chrono::high_resolution_clock::now();
     auto delta_time = chrono::duration_cast<chrono::milliseconds>(now - frame_start).count() / 1000.0f;
     time_passed += delta_time;
-        frame_start = now;
+    frame_start = now;
     
         // ... el resto del main loop
 } 
@@ -157,7 +156,7 @@ De esta forma ahora tendremos la cantidad de tiempo que ha pasado desde el inici
 
 ## Canvas
 
-Ahora mismo estamos imprimiendo el mismo caracter continuamente en la terminal, pero queremos que el caracter **dependa de la posición** en el área donde estamos dibujando. Para esto usaremos una matriz de caracteres de tamaño \$R \times R\$ donde vamos a almacenar los caracteres que vamos a dibujar en la terminal. Simplemente crearemos una matriz `char canvas[R][R]` en donde sea más conveniente que usaremos para dibujar en la terminal:
+Ahora mismo estamos imprimiendo el mismo caracter continuamente en la terminal, pero queremos que el caracter **dependa de la posición** en el área donde estamos dibujando. Para esto usaremos una matriz de caracteres de tamaño \$R \times R\$ donde vamos a almacenar los caracteres que vamos a dibujar en la terminal. Simplemente crearemos una matriz `char canvas[R][R]`  que usaremos para dibujar en la terminal:
 
 ```cpp
 while(true)
@@ -255,7 +254,7 @@ Donde:
 
 - \$\color{red}{r_a}\$ es el radio de la circunferencia del torus
 - \$\color{blue}{r_b}\$ es el radio del “tubo”, el círculo que se rota para conseguir el torus, que es un sólido en revolución.
-- \$\color{blue}\theta, \color{red}\phi\$  son ángulos que se usan para parametrizar la figura del torus. El ángulo \$ \color{blue} \theta\$ indica en qué parte de la circunferencia interna estamos, mientras que el ángulo \$ \color{red} \phi\$ indica la posición en la circunferencia interna.
+- \$\color{blue}\theta, \color{red}\phi\$  son ángulos que se usan para parametrizar la figura del torus. El ángulo \$ \color{blue} \theta\$ indica en qué parte de la circunferencia externa estamos, mientras que el ángulo \$ \color{red} \phi\$ indica la posición en la circunferencia interna.
 
 ![Los parámetros **Ra, Rb**,  corresponden a los radios del círculo y el tubo respectivamente, los ejes son **X**, **Y**, **Z**](/assets/images/torus-cpp/image_2023-06-06_201607213.png)
 
@@ -277,7 +276,7 @@ void torus_point(float theta, float phi, float torus_radius, float tube_radius, 
 ```
 Para usar las funciones `cos` y `sin` vamos a necesitar incluir `math`, con `#include <math>`.
 
-Esta función simplemente calcula las tres coordenadas del torus usando la ecuación que mostramos hace un momento. Notemos que, como devolveremos tres valores, se pasan por referencia las variables donde se almacenan los resultados. Como ejercicio adicional, podría implementar un `struct` que represente un punto o vector. En este artículo no lo haremos para limitarnos a usar solo variables, funciones y estructuras de control básicas.
+Esta función simplemente calcula las tres coordenadas de un punto del torus usando la ecuación que mostramos hace un momento. Notemos que, como devolveremos tres valores, se pasan por referencia las variables donde se almacenan los resultados. Como ejercicio adicional, podría implementar un `struct` que represente un punto o vector. En este artículo no lo haremos para limitarnos a usar solo variables, funciones y estructuras de control básicas.
 
 El toroide es una **superficie continua,** lo que significa que tiene infinitos puntos, pero nosotros necesitamos solo algunos. 
 
