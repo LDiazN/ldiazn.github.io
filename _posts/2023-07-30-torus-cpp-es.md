@@ -12,7 +12,7 @@ en_version: true
 <br>
 ![Toroide que gira en una terminal, usando arte ASCII](/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif)
 
-Este programa está inspirado en [donut.c](https://www.a1k0n.net/2011/07/20/donut-math.html) , un programa escrito en C escrito por Andy Sloane. Su objetivo era renderizar una dona girando aleatoriamente en el espacio en la terminal usando C ofuscado, incluso su código tiene forma de dona:
+Este programa está inspirado en [donut.c](https://www.a1k0n.net/2011/07/20/donut-math.html) , un programa escrito en C por Andy Sloane. Su objetivo era renderizar una dona girando aleatoriamente en el espacio en la terminal usando C ofuscado, incluso su código tiene forma de dona:
 
 ```
              k;double sin()
@@ -38,21 +38,21 @@ in(B),t=c*h*g-f*        e;int x=40+30*D*
              ..,--------,*/
 ```
 
-Este programa tiene un lugar especial en mi corazón porque me topé con él cuando a penas estaba aprendiendo a programar y en su momento se sentía como magia. Ahora que ha pasado el tiempo y sé mucho más que antes, quiero escribir este artículo como la explicación que me habría gustado tener cuando lo vi por primera vez. 
+**donut.c** tiene un lugar especial en mi corazón porque me topé con él cuando a penas estaba aprendiendo a programar y en su momento se sentía como magia. Ahora que ha pasado el tiempo y sé mucho más que antes, quiero escribir este artículo como la explicación que me habría gustado tener cuando lo vi por primera vez. 
 
-Además representa la versión mínima viable del pipeline de computación gráfica, se implementa sobre una versión reducida de las bases que usamos para implementar un render. Y lo mejor de todo es que se puede implementar usando un único archivo, sin necesidad de dependencias adicionales más allá de la librería de matemáticas de C. 
+Otra propiedad interesante de **donut.c** es que representa la versión mínima viable del pipeline de computación gráfica, se implementa sobre una versión reducida de las bases que usamos para implementar un render. Y lo mejor de todo es que se puede implementar usando un único archivo, sin necesidad de dependencias adicionales más allá de la librería de matemáticas de C. 
 
-En este artículo implementaremos paso a paso una versión más legible de donut.c, esta vez en C++. Manteniendo el espíritu de donut.c, tendremos los siguientes objetivos:
+En este artículo implementaremos paso a paso una versión más legible de donut.c, esta vez en C++. Siguiendo el espíritu de donut.c, tendremos los siguientes objetivos:
 
-1. El código debe ser un sólo archivo, `torus.cpp`
-2. El código debe ser lo más sencillo posible, trataremos de usar solo funciones y estructuras de control básicas.
-3. No importaremos nada adicional, más allá de algunas librerías de C++ para imprimir, tomar el tiempo, y hacer cálculos matemáticos
-4. Por fines didácticos, nuestro programa estará más enfocado en la legibilidad que en la ofuscasión, a diferencia del programa de Sloane
+1. El código debe ser **un sólo archivo**, `torus.cpp`
+2. El código debe ser **lo más sencillo posible**, trataremos de usar solo funciones y estructuras de control básicas.
+3. **No importaremos nada adicional**, más allá de algunas librerías de C++ para imprimir, tomar el tiempo, y hacer cálculos matemáticos. 
+4. Por fines didácticos, nuestro programa estará más enfocado en la **legibilidad** que en la ofuscasión, a diferencia del programa de Sloane.
 5. Y, finalmente, ¡vamos a implementar una dona (torus o toroide) rotando en la terminal!
 
 # Dibujando en la terminal
 
-La idea es crear un programa que se ejecute infinitamente reemplazando una matriz de caracteres de tamaño \$R\$ en la terminal con una pequeña variación de sí misma. Sin embargo, usualmente la terminal está destinada a imprimir texto de forma continua, dejando registro del texto que se ha impreso hasta ahora, a diferencia de las ventanas donde se dibuja una interfaz que se actualiza en cada iteración del programa. Por esta razón, lo primero que debemos hacer es buscar una forma de actualizar un conjunto de celdas en una terminal en lugar de empilarlas continuamente. Esto varía un poco según el emulador de terminal que uses, pero sigue más o menos el mismo patrón en todos. 
+La idea es crear un programa que se ejecute infinitamente reemplazando una matriz de caracteres de tamaño \$R\$ en la terminal con una pequeña variación de sí misma. Sin embargo, usualmente la terminal está destinada a imprimir texto de forma continua, dejando registro del texto que se ha impreso hasta ahora, a diferencia de las ventanas donde se dibuja una interfaz gráfica que se actualiza en cada iteración del programa. Por esta razón, lo primero que debemos hacer es buscar una forma de actualizar un conjunto de celdas en una terminal en lugar de empilarlas continuamente. Esto varía un poco según el emulador de terminal que uses, pero sigue más o menos el mismo patrón en todos: **Códigos de escape ANSI**. 
 
 Los códigos de escape ANSI se usan para indicarle algún comportamiento en particular a la terminal, como imprimir los caracteres en cierto color o tipo de fuente, o cambiar la posición del cursor, que es el caso que nos interesa ahora mismo
 
@@ -126,7 +126,7 @@ this_thread::sleep_for(chrono::milliseconds(30));
 
 - `this_thread::sleep_for(X)` se usa para poner al ***main thread*** a dormir por una cantidad especificada de tiempo
 - `chrono::milliseconds(X)` representa un intervalo de X milisegundos
-- Escogemos **30** milisegundos porque si queremos 30 FPS, entonces cada iteración debería durar aproximadamente 0.030 (1/30) segundos  o 30 milisegundos.
+- Escogemos **30** milisegundos porque si queremos 30 FPS, entonces cada iteración debería durar aproximadamente 0.030 (1/30) segundos  o 30 milisegundos. Para simplificar este programa asumiremos que el *main loop* siempre es instantáneo.
 - Esta línea se añade al final del ***main loop*** para garantizar que el programa espere un poco luego de haber impreso el fotograma actual
 
 Más adelante necesitaremos una forma de saber cuanto tiempo ha pasado desde el inicio de la aplicación para poder hacer operaciones que dependan del tiempo, por esta razón también usaremos una variable para acumular el tiempo que ha transcurrido desde el inicio.  Para eso, consideremos el siguiente fragmento de código:
@@ -175,7 +175,7 @@ El espacio adicional que se imprime luego del caracter no es necesario, pero per
 Hasta ahora, deberías tener las siguientes funcionalidades implementadas:
 
 1. Se puede imprimir en terminal reemplazando la imagen anterior en lugar de llenando la terminal con muchas repeticiones de la misma imagen
-2. Existe un intervalo de tiempo entre cada fotogramas: las iteraciones del main loop no se ejecutan de inmediato
+2. Existe un intervalo de tiempo entre cada fotograma: las iteraciones del main loop no se ejecutan de inmediato
 3. Tenemos una variable que anota el tiempo que ha pasado desde el inicio del programa y se actualiza en cada iteración.
 4. El contenido de los pixeles se guarda en una matriz de tamaño \$R\$, la resolución escogida, y se imprime desde esta matriz.
 
@@ -253,19 +253,19 @@ $$
 
 Donde:
 
-- \$\color{red}r_a\$ es el radio de la circunferencia del torus
-- \$\color{blue}r_b\$ es el radio del “tubo”, el círculo que se rota para conseguir el torus, que es un sólido en revolución.
+- \$\color{red}{r_a}\$ es el radio de la circunferencia del torus
+- \$\color{blue}{r_b}\$ es el radio del “tubo”, el círculo que se rota para conseguir el torus, que es un sólido en revolución.
 - \$\color{blue}\theta, \color{red}\phi\$  son ángulos que se usan para parametrizar la figura del torus. El ángulo \$ \color{blue} \theta\$ indica en qué parte de la circunferencia interna estamos, mientras que el ángulo \$ \color{red} \phi\$ indica la posición en la circunferencia interna.
 
 ![Los parámetros **Ra, Rb**,  corresponden a los radios del círculo y el tubo respectivamente, los ejes son **X**, **Y**, **Z**](/assets/images/torus-cpp/image_2023-06-06_201607213.png)
 
-Los parámetros **Ra, Rb**,  corresponden a los radios del círculo y el tubo respectivamente, los ejes son **X**, **Y**, **Z**
+Los parámetros $\color{red}{R_a}$, $\color{blue}{R_b}$,  corresponden a los radios del círculo y el tubo respectivamente, los ejes son $\color{red}X$, $\color{green}Y$, $\color{blue} Z$
 
 ![El ángulo **θ** corresponde al ángulo en la circunferencia del tubo, y el ángulo **Φ** corresponde al ángulo en la circunferencia interna.](/assets/images/torus-cpp/image_2023-06-07_201159283.png)
 
-El ángulo **θ** corresponde al ángulo en la circunferencia del tubo, y el ángulo **Φ** corresponde al ángulo en la circunferencia interna.
+El ángulo $\color{blue}\theta$ corresponde al ángulo en la circunferencia del tubo, y el ángulo $\color{red}\phi$ corresponde al ángulo en la circunferencia interna.
 
-Para representar esta ecuación paramétrica del toroide, usaremos la siguiente función. para hacerlo será necesario incluir `math` en nuestro programa, con `#include <math>`. La función en cuestión será la siguiente:
+Para representar esta ecuación paramétrica del toroide, usaremos la siguiente función:
 
 ```cpp
 void torus_point(float theta, float phi, float torus_radius, float tube_radius, float &out_x, float &out_y, float &out_z)
@@ -275,10 +275,11 @@ void torus_point(float theta, float phi, float torus_radius, float tube_radius, 
     out_z = -tube_radius * sin(theta);
 }
 ```
+Para usar las funciones `cos` y `sin` vamos a necesitar incluir `math`, con `#include <math>`.
 
 Esta función simplemente calcula las tres coordenadas del torus usando la ecuación que mostramos hace un momento. Notemos que, como devolveremos tres valores, se pasan por referencia las variables donde se almacenan los resultados. Como ejercicio adicional, podría implementar un `struct` que represente un punto o vector. En este artículo no lo haremos para limitarnos a usar solo variables, funciones y estructuras de control básicas.
 
-Ahora, el toroide es una **superficie continua,** lo que significa que tiene infinitos puntos, pero nosotros necesitamos solo algunos. 
+El toroide es una **superficie continua,** lo que significa que tiene infinitos puntos, pero nosotros necesitamos solo algunos. 
 
 Como tenemos dos valores que parametrizan los puntos en el toroide, \$\color{blue} \theta, \color{red} \phi\$, entonces para obtener los vértices necesitamos una secuencia de pares de valores para  \$\color{blue} \theta, \color{red} \phi\$.  Para escoger estos pares, tal como iteraríamos en una matriz, iteraremos sobre los anillos y vértices por anillo del toroide.  
 
@@ -322,7 +323,7 @@ void update_canvas(char (&canvas)[R][R])
 
 Como mencionamos al principio, usaremos un enfoque orientado a vértices, así que iteraremos por los vértices del modelo en lugar de los pixeles de la imagen. Por esta razón, en este ciclo que acabamos de crear se enfocará la mayoría del trabajo. 
 
-Para este punto estamos en capacidad de actualizar el canvas y de generar los puntos del toroide, sin embargo seguimos sin ver nada en la terminal. Para resolver esto, añadiremos algo de código temporal que nos permitirá tener mejor feedback de nuestro trabajo. 
+En este momento estamos en capacidad de actualizar el canvas y de generar los puntos del toroide, sin embargo seguimos sin ver nada en la terminal. Para resolver esto, añadiremos algo de código temporal que nos permitirá tener mejor feedback de nuestro trabajo. 
 
 ```cpp
 void update_canvas(char (&canvas)[R][R])
@@ -499,6 +500,8 @@ Con el parámetro del tiempo transcurrido podremos calcular la rotación del tor
     ![OrdenDeTransformación.png](/assets/images/torus-cpp/OrdenDeTransformacin.png)
     
 
+> 📝 **Nota:** En realidad es posible rotar antes de trasladar, usando la matriz de rotación que también depende del eje de rotación. Las matrices de rotación que estamos usando asumen que el eje de rotación es está en el origen (cada eje del origen dependiendo de la rotación), y nos quedaremos con ellas por simplicidad.
+
 ## Proyección en perspectiva
 
 Proyectar es el proceso de transformar una representación geométrica en 3D en una en 2D. En nuestro caso, queremos transformar puntos 3D en una imagen 2D. Naturalmente, proyectar se traduce en conseguir una función para transformar puntos 3D en puntos 2D. 
@@ -513,7 +516,7 @@ Esta transformación es simple y nos permite visualizar los objetos en 3D fácil
 
 ![Proyección ortográfica: Los puntos del cubo se transforman a puntos en el plano simplemente descartando su coordenada Z.](/assets/images/torus-cpp/Proyeccin_ortogrfica_(1).png)
 
-Proyección ortográfica: Los puntos del cubo se transforman a puntos en el plano simplemente descartando su coordenada Z.
+**Proyección ortográfica**: Los puntos del cubo se transforman a puntos en el plano simplemente descartando su coordenada Z.
 
 Ahora buscaremos implementar **proyección en perspectiva,** es un estilo de proyección que considera la profundidad, para que objetos lejanos se vean más pequeños que objetos cercanos a la cámara. La idea será escalar los puntos \$(x,y)\$ linealmente respecto a su coordenada \$z\$.  Para esto, consideremos la siguiente imagen:
 
@@ -627,7 +630,7 @@ Para esto usaremos el **producto interno**, entre la dirección de la luz y el v
 
 ![Ejemplos de producto punto. a y b son perpendiculares, así que su producto punto es 0. a y c son antiparalelos, así que su producto punto es -1, y c es paralelo a sí mismo, por lo que el producto consigo mismo es 1. Además, todos los vectores entre c y b multiplicados con a producen valores negativos, y todos los vectores entre c y b multiplicados con c producen valores positivos.](/assets/images/torus-cpp/ProductoInterno.png)
 
-Ejemplos de producto punto. a y b son perpendiculares, así que su producto punto es 0. a y c son antiparalelos, así que su producto punto es -1, y c es paralelo a sí mismo, por lo que el producto consigo mismo es 1. Además, todos los vectores entre c y b multiplicados con a producen valores negativos, y todos los vectores entre c y b multiplicados con c producen valores positivos.
+**Ejemplos de producto punto**. $\color{red}a$ y $\color{green}b$ son perpendiculares, así que su producto punto es 0. $\color{red}a$ y $\color{blue}c$ son antiparalelos, así que su producto punto es -1, y $\color{blue}c$ es paralelo a sí mismo, por lo que el producto consigo mismo es 1. Además, todos los vectores entre $\color{blue}c$ y $\color{green}b$ multiplicados con a producen valores negativos, y todos los vectores entre $\color{blue}c$ y $\color{green}b$ multiplicados con $\color{blue}c$ producen valores positivos.
 
 Ahora que tenemos una idea para colorear nuestros pixeles con caracteres, necesitamos un plan para hacerla realidad. Los pasos son los siguientes:
 
@@ -649,6 +652,8 @@ Como vemos en este caso, la circunferencia de centro \$C\$ tiene normal \$\color
 
 Si recordamos la geometría del toroide, notamos que podemos calcular el punto en el centro del tubo como un toroide de radio 0:
 
+![Los parámetros **Ra, Rb**,  corresponden a los radios del círculo y el tubo respectivamente, los ejes son **X**, **Y**, **Z**](/assets/images/torus-cpp/image_2023-06-06_201607213.png)
+
 En este ejemplo, si hacemos \$\color{blue}{R_b} = 0\$, entonces el punto obtenido estará siempre en el origen. De esta forma, podemos escribir la siguiente función:
 
 ```cpp
@@ -664,7 +669,7 @@ void torus_normal(float theta, float phi, float torus_radius, float tube_radius,
     torus_point(theta, phi, torus_radius, 0, c_x, c_y, c_z);
 
     // Calculamos el vector normal como la diferencia entre el centro y el punto 
-        // de superficie:
+    // de superficie:
     out_x = p_x - c_x;
     out_y = p_y - c_y;
     out_z = p_z - c_z;
@@ -676,7 +681,7 @@ void torus_normal(float theta, float phi, float torus_radius, float tube_radius,
 }
 ```
 
-- En esta función, calculamos el punto el la superficie usando la función que definimos anteriormente.
+- En esta función, calculamos el punto el la superficie usando la función de punto en toroide que definimos anteriormente.
 - Luego, usamos esta misma función con radio de tubo 0 para obtener el punto en el centro.
 - Calculamos el vector normal como la diferencia entre estos dos vectores.
 - Finalmente, como sabemos que la longitud de este vector es igual al radio del tubo, podemos normalizar este vector usando el radio del tubo como magnitud.
@@ -702,7 +707,7 @@ A continuación, definiremos las siguientes variables en la función de actualiz
     LIGHT_DIR_Z = LIGHT_DIR_Z / magnitude;
 ```
 
-Con estas variables definimos la dirección de la luz, está sobre el eje \$y\$ y apunta hacia abajo y hacia el frente. Notemos que es importante normalizar este vector para que nuestros próximos cálculos sean correctos.
+Con estas variables definimos la dirección de la luz, está sobre el eje \$y\$ y apunta hacia abajo y hacia el frente. Notemos que es **importante normalizar este vector** para que nuestros próximos cálculos sean correctos.
 
 Antes de usar el vector normal, debemos transformarlo para que sea consistente con las transformaciones que hemos aplicado al toroide.
 
@@ -818,6 +823,8 @@ Finalmente, para usar el z buffer, simplemente revisamos que el punto actual est
 ```
 
 Y con esto hemos terminado nuestro programa. Este fue un viaje largo, pero en el camino aprendimos las bases de computación gráfica, y logramos implementar el renderizado de una figura geométria en 3D usando solo estructuras de control básicas. Con este programa como base es fácil extender la teoría para entender el renderizado con APIs gráficas, como OpenGL. 
+
+Con un poco más de trabajo es posible extender este esquema sencillo para hacer estilos de render más complejos. Podrías añadir un parser de modelos 3D para leer los puntos de la superficie junto con sus normales para crear un render de terminal que sirva para cualquier tipo de geometría 3D en lugar de solo con toroides. Yendo un poco más lejos, podríamos mapear colores en RGB a algunos colores en códigos ANSI y usar las UVs para hacer un renderizado sencillo con colores. Incluso podríamos convertirlo en un *Ray Tracer* recursivo cambiando el enfoque *por-punto* por un enfoque *por-pixel*, ¡el cielo es el límite!
 
 El código resultante de este artículo se puede encontrar en el siguiente enlace en GitHub:
 
