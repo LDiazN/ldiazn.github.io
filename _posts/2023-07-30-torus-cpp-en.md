@@ -364,8 +364,6 @@ void update_canvas(char (&canvas)[R][R])
 - Later we will modify this function to include more appropriate coloring and perspective projection, but for now this will be enough for testing.
 - In this program we can also see the relationship between the coordinates of the canvas and the torus.
 
-# English
-
 The following image shows the relationship between the canvas and the torus geometry. The position `[0][0]` of the matrix corresponds to the points in the interval $[0,1)\times[0,1)$, the slot `[0][1]` to the points in $[0,1)\times[1,2)$, and so on. In other words, the canvas is a window that goes from the origin to the point $(R,R)$.
 
 ![Untitled](/assets/images/torus-cpp/Untitled%201.png)
