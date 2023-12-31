@@ -121,7 +121,7 @@ There are two important considerations we need to address before we can implemen
 
 ## Time interval
 
-Now, we need to tell the program how often we want it to execute. To do this, we will put our program to sleep for a specified amount of time at the end of each iteration. To do this, we need to include `thread` and `chrono`. The first gives us access to the function we will use to put our thread to sleep, and the second allows us to work with time intervals. We can do this by adding the following ***includes*** to the beginning of our program:
+Now, we need to tell the program how often we want it to execute. To do this, we will put our program to sleep for a specified amount of time at the end of each iteration. We need to include `thread` and `chrono`. The former gives us access to the function we will use to put our thread to sleep, while the latter allows us to work with time intervals. We can do this by adding the following ***includes*** to the beginning of our program:
 
 ```cpp
 #include <chrono>
@@ -136,7 +136,7 @@ this_thread::sleep_for(chrono::milliseconds(30));
 
 * `this_thread::sleep_for(X)` is used to put the **main thread** to sleep for a specified amount of time.
 * `chrono::milliseconds(X)` represents an interval of X milliseconds.
-* We choose **30** milliseconds because if we want 30 FPS, then each iteration should last approximately 0.030 (1/30) seconds or 30 milliseconds. To simplify this program, we will assume that the main loop is always instantaneous.
+* We choose **30** milliseconds because if we want 30 FPS, then each iteration should last approximately 0.033 (1/30) seconds, ~30 milliseconds. To simplify this program, we will assume that the main loop is always instantaneous.
 * This line is added at the end of the ***main loop*** to ensure that the program waits a bit after printing the current frame.
 
 Later, we will need a way to know how much time has passed since the start of the application to be able to perform operations that depend on time. For this reason, we will also use a variable to accumulate the time that has elapsed since the start. Consider the following code fragment:
@@ -213,7 +213,7 @@ void update_canvas(char (&canvas)[R][R])
 
 
 
->The type of the parameter `canvas` may seem a bit strange, but the parentheses simply indicate that the parameter is a **character matrix** passed by reference, instead of an array of character references, which would generate a compilation error. It is important to pass this array by reference because otherwise, the entire contents of the array would be copied into the function arguments and this can be large. In addition, the external array would not be modified, so the resulting array would have to be returned by value, which would imply another copy.
+>The type of the `canvas` parameter may seem a bit strange, but the parentheses simply indicate that the parameter is a **character matrix** passed by reference, instead of an array of character references, which would generate a compilation error. It is important to pass this array by reference because otherwise the entire contents of the array would be copied into the function arguments and this can be a large amount of memory. In addition, the external array would not be modified, so the resulting array would have to be returned by value, which would imply yet another copy.
 
 We will add this function to our ***main loop***, just before printing the characters to the terminal.
 
@@ -233,7 +233,7 @@ Now that we have our `update_canvas` function in place, we can start working on 
 
 ## Generating vertices
 
-Before we start, we will clean up the canvas assigning a whitespace character `' '` to each cell, this way it will be "blank". We need to do this because we will only assing a color to a cell if it corresponds to a torus point. If there's no torus point for that cell, its content will be unmodified. 
+Before we start, we will clean up the canvas by assigning a whitespace character `' '` to each cell, this way it will be "blank". We need to do this because we will only assing a color to a cell if it corresponds to a torus point. If there's no torus point for that cell, its content will be unmodified. 
 
 ```cpp
 void update_canvas(char (&canvas)[R][R])
