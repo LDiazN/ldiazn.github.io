@@ -6,7 +6,29 @@ layout: default
     <div class="dashed"></div>
 </header>
 
-<h1 class="post-title">{{ page.title }}</h1>  
+<h1 class="post-title" style="padding: 0 0 0.5em 0;">{{ page.title }}</h1>  
+<ul class="related-links">
+  {% if page.repo %}
+    <li title="Go to repo">
+      <a href="{{page.repo}}" target="_blank" style="text-decoration: none;"><i class="fa fa-github"></i></a>
+    </li>
+  {% endif %}
+  {% if page.es_version %}
+    <li title="Spanish Version">
+      <a href="{{page.url | replace: "-en", "-es"}}">
+        🇪🇸
+      </a>  
+    </li>
+  {% endif %}
+  {% if page.en_version %}
+    <li title = "English Version"> 
+      <a href="{{page.url | replace: "-es", "-en"}}">
+        🇬🇧 
+      </a>
+    </li>
+  {% endif %}
+  </ul>
+
 <!-- {% include date_and_social_share.html %} -->
 {{ content }}
 
