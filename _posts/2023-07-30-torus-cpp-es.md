@@ -12,7 +12,8 @@ en_version: true
 <br>
 ![Toroide que gira en una terminal, usando arte ASCII](/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif)
 
-Este programa está inspirado en [donut.c](https://www.a1k0n.net/2011/07/20/donut-math.html) , un programa escrito en C por **Andy Sloane**. Su objetivo era renderizar una dona girando aleatoriamente en el espacio en la terminal usando C ofuscado, incluso su código tiene forma de dona:
+Cuando estaba aprendiendo a programar me topé con [donut.c](https://www.a1k0n.net/2011/07/20/donut-math.html), un programa escrito en C por **Andy Sloane**. Su objetivo era renderizar una dona girando aleatoriamente en el espacio en la terminal usando C ofuscado, incluso su código tiene forma de dona:
+
 
 ```
              k;double sin()
@@ -38,7 +39,7 @@ in(B),t=c*h*g-f*        e;int x=40+30*D*
              ..,--------,*/
 ```
 
-**donut.c** tiene un lugar especial en mi corazón porque me topé con él cuando a penas estaba aprendiendo a programar y en su momento se sentía como magia. Ahora que ha pasado el tiempo y sé mucho más que antes, quiero escribir este artículo como la explicación que me habría gustado tener cuando lo vi por primera vez. 
+**donut.c** tiene un lugar especial en mi corazón por el momento en que me topé con él, en su momento se sentía como magia. Ahora que ha pasado el tiempo y sé mucho más que antes, quiero escribir este artículo como la explicación que me habría gustado tener cuando lo vi por primera vez. 
 
 Otra propiedad interesante de **donut.c** es que representa la versión mínima viable del pipeline de computación gráfica, se implementa sobre una versión reducida de las bases que usamos para implementar un render. Y lo mejor de todo es que se puede implementar usando un único archivo, sin necesidad de dependencias adicionales más allá de la librería de matemáticas de C. 
 
@@ -320,37 +321,37 @@ void update_canvas(char (&canvas)[R][R])
 }
 ```
 
-Como mencionamos al principio, usaremos un enfoque orientado a vértices, así que iteraremos por los vértices del modelo en lugar de los pixeles de la imagen. Por esta razón, en este ciclo que acabamos de crear se enfocará la mayoría del trabajo. 
+Como mencionamos al principio, usaremos un enfoque orientado a vértices, así que iteraremos por los vértices del modelo en lugar de los pixeles de la imagen. Por esta razón, la mayoría del trabajo que haremos a continuación será en el *for loop* que acabamos de crear. 
 
 En este momento estamos en capacidad de actualizar el canvas y de generar los puntos del toroide, sin embargo seguimos sin ver nada en la terminal. Para resolver esto, añadiremos algo de código temporal que nos permitirá tener mejor feedback de nuestro trabajo. 
 
 ```cpp
 void update_canvas(char (&canvas)[R][R])
 {
-        // ... Limpiamos el canvas ...
-        // ... Escogemos los radios del torus y su resolución ...
+    // ... Limpiamos el canvas ...
+    // ... Escogemos los radios del torus y su resolución ...
     
-      for (int i = 0; i < TORUS_RESOLUTION; i++)
-      {
-          const float phi = step_size * i;
-          for (int j = 0; j < TORUS_RESOLUTION; j++)
-          {
-              const float theta = step_size * j;
-                        // ... Calculamos la posición x,y,z del vértice actual ...
-                        int x_int, y_int;
+    for (int i = 0; i < TORUS_RESOLUTION; i++)
+    {
+        const float phi = step_size * i;
+        for (int j = 0; j < TORUS_RESOLUTION; j++)
+        {
+            const float theta = step_size * j;
+            // ... Calculamos la posición x,y,z del vértice actual ...
+            int x_int, y_int;
             x_int = (int) x;
             y_int = (int) y;
-                        if (0 <= x_int && x_int < R && 0 <= y_int && y_int < R)
+            if (0 <= x_int && x_int < R && 0 <= y_int && y_int < R)
             {
-                            canvas[y_int][x_int] = '#';
-                        }
-                }
+                canvas[y_int][x_int] = '#';
+            }
         }
+    }
 }
 ```
 
 - Con este programa, estamos asignando el pixel como `#` en caso de que contenga un vértice.
-- Contraintuitivamente, la coordenada X se corresponde al segundo índice de la matriz. Esto se debe a que ese índice es el que avanza las posiciones en la matriz horizontalmente. Análogamente, la coordenada Y corresponde al primer índice en la matriz.
+- Contraintuitivamente, la coordenada **X** se corresponde al segundo índice de la matriz. Esto se debe a que ese índice es el que avanza las posiciones en la matriz horizontalmente. Análogamente, la coordenada Y corresponde al primer índice en la matriz.
 - Esencialmente estamos usando **proyección ortográfica** , puesto que el objeto que veamos no considerará profundidad.
 - Más adelante modificaremos esta función para incluir un coloreado más apropiado y proyección en perspectiva, pero por ahora esto nos servirá para probar.
 - En este programa también podemos ver la relación entre las coordenadas del canvas y el del toroide.
@@ -475,31 +476,31 @@ while(true)
 Con el parámetro del tiempo transcurrido podremos calcular la rotación del toroide en cada fotograma:
 
 ```cpp
- for (int i = 0; i < TORUS_RESOLUTION; i++)
-  {
-      const float phi = step_size * i;
-      for (int j = 0; j < TORUS_RESOLUTION; j++)
-      {
-          const float theta = step_size * j;
-                    // ... Calculamos la posición x,y,z del vértice actual ...
-                        rotate_y(time_passed, x,y,z, x,y,z);
+    for (int i = 0; i < TORUS_RESOLUTION; i++)
+    {
+        const float phi = step_size * i;
+        for (int j = 0; j < TORUS_RESOLUTION; j++)
+        {
+            const float theta = step_size * j;
+            // ... Calculamos la posición x,y,z del vértice actual ...
+            rotate_y(time_passed, x,y,z, x,y,z);
             rotate_x(time_passed * 1.13, x,y,z, x,y,z);
             rotate_z(time_passed * 1.74, x,y,z, x,y,z);		
-                    // ... Escalamos y trasladamos los puntos del toroide ...
+            // ... Escalamos y trasladamos los puntos del toroide ...
                     
-                    // ... Asignamos # a la posición en la matriz que contiene este punto ...
-            }
+            // ... Asignamos # a la posición en la matriz que contiene este punto ...
+        }
     }
 ```
 
 - En este programa, usamos el tiempo transcurrido para calcular el ángulo de rotación alrededor de cada eje.
-- Cada función multiplica el tiempo transcurrido con un escalar distinto para que cada eje tenga una velocidad de rotación distinta.
-- Es importante **aplicar rotaciones antes de traslaciones**, porque las traslaciones de un objeto trasladado rotan el objeto alrededor del origen, no alrededor del eje del objeto. En los objetos que están en el origen, su eje de rotación coincide con el origen.
+- Cada llamada a función multiplica el tiempo transcurrido con un escalar distinto para que cada eje tenga una velocidad de rotación distinta.
+- Es importante **aplicar rotaciones antes de traslaciones**, porque las rotaciones de un objeto trasladado rotan el objeto alrededor del origen, no alrededor del eje del objeto. En los objetos que están en el origen, su eje de rotación coincide con el origen.
     
-    ![OrdenDeTransformación.png](/assets/images/torus-cpp/OrdenDeTransformacin.png)
+![OrdenDeTransformación.png](/assets/images/torus-cpp/OrdenDeTransformacin.png)
     
 
-> 📝 **Nota:** En realidad es posible rotar antes de trasladar, usando la matriz de rotación que también depende del eje de rotación. Las matrices de rotación que estamos usando asumen que el eje de rotación es está en el origen (cada eje del origen dependiendo de la rotación), y nos quedaremos con ellas por simplicidad.
+> 📝 **Nota:** En realidad es posible rotar después de trasladar, usando la matriz de rotación que también depende del eje de rotación. Las matrices de rotación que estamos usando asumen que el eje de rotación es está en el origen (cada eje del origen dependiendo de la rotación), y nos quedaremos con ellas por simplicidad.
 
 ## Proyección en perspectiva
 
@@ -643,7 +644,7 @@ Adicionalmente, un problema que no hemos resuelto hasta ahora es el **orden de d
 
 Con nuestro plan trazado, procederemos a implementarlo. Empezaremos creando la función para **calcular la normal del toroide.** 
 
-Para empezar, notaremos que el toroide es un sólido en revolución, es una circunferencia trasladada cierta distancia del origen y rotada alrededor de un eje. Sabemos que la normal en un punto de una circunferencia es paralela al vector entre dicho punto y el centro de la circunferencia:
+Para empezar, notaremos que el toroide es un [sólido en revolución](https://en.wikipedia.org/wiki/Solid_of_revolution), es una circunferencia trasladada cierta distancia del origen y rotada alrededor de un eje. Sabemos que la normal en un punto de una circunferencia es paralela al vector entre dicho punto y el centro de la circunferencia:
 
 ![NormalCircunferencia.png](/assets/images/torus-cpp/NormalCircunferencia.png)
 
@@ -776,7 +777,7 @@ Finalmente, vamos a asignar el color correcto a cada pixel:
 - En este código estamos definiendo un arreglo de caracteres ordenados de “menos claro” a “más claro”.
 - Calculamos el producto punto entre la normal y la luz
 - Nos aseguramos de que el valor del producto punto sea el correcto
-- Si el producto punto es mayor o igual que 0, significa que la normal es paralela a la luz y por lo tanto es un punto de la superficie que no mira hacia la luz. De lo contrario, está de cara hacia la luz y la refleja con mayor intensidad.
+- Si el producto punto es mayor o igual que 0, significa que la normal es "paralela" a la luz y por lo tanto es un punto de la superficie que no mira hacia la luz. De lo contrario, está de cara hacia la luz y la refleja con mayor intensidad.
 
 Para este punto es posible que la imagen que veas no tenga los colores correctos, esto se debe a que no estamos revisando si estamos dibujando sobre un pixel que ya es el más cercano a la pantalla. Para esto usaremos el **z buffer.** Es una matriz del mismo tamaño del canvas donde almacenaremos la componente z del punto correspondiente a cada pixel. Solo dibujaremos puntos si el pixel que le corresponde está vacío o tiene un punto que esté más atrás. 
 
@@ -791,7 +792,7 @@ Para este punto es posible que la imagen que veas no tenga los colores correctos
     // ... Procesamiento de cada punto del toroide ...
 ```
 
-- En esta sección estamos creando un z buffer (o ***depth bufferI***) del mismo tamaño del canvas
+- En esta sección estamos creando un z buffer (o ***depth buffer***) del mismo tamaño del canvas
 - Lo inicializamos valores lo bastante altos para que cualquier punto esté más adelante que el valor inicial.
 
 Finalmente, para usar el z buffer, simplemente revisamos que el punto actual esté más adelante que el último que haya sido dibujado en la misma posición, y si lo está, actualizamos el z buffer:

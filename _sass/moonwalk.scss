@@ -3,6 +3,11 @@
 
 html { height: 100%; }
 
+.content-body {
+  text-align: justify;
+  text-justify: inter-word;
+}
+
 body {
   font-family:  "Inter", -apple-system, "avenir next", avenir, roboto, noto, ubuntu, "helvetica neue", helvetica, sans-serif;
   font-size: 1.0rem;
