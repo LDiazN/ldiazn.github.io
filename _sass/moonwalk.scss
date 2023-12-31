@@ -3,6 +3,11 @@
 
 html { height: 100%; }
 
+.content-body {
+  text-align: justify;
+  text-justify: inter-word;
+}
+
 body {
   font-family:  "Inter", -apple-system, "avenir next", avenir, roboto, noto, ubuntu, "helvetica neue", helvetica, sans-serif;
   font-size: 1.0rem;
@@ -199,7 +204,7 @@ mark {
     }
   }
 
-  .post-list-item-thumbnail
+  .post-list-item-miniature
   {
     flex: 1;
 
@@ -210,7 +215,6 @@ mark {
       margin: 0 0;
     }
   }
-
 }
 .post-list-item  .home-date {
   float: right;
@@ -263,6 +267,24 @@ p code, li code {
     color: var(--links);
   }
 }
+
+.related-links {
+  padding-left: 0;
+  text-decoration: none;
+  list-style: none;
+  margin-top: 0;
+  a {
+    text-decoration: none;
+    color: var(--text)
+  }
+  
+  li {
+    display: inline;
+    margin-top: 0;
+    font-size: 2em;
+  }
+}
+
 .tag {
   font-family: "Roboto Mono", "Courier New", monospace;
   color: var(--text-secondary);
