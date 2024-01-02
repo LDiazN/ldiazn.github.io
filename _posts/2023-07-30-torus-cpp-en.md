@@ -14,8 +14,8 @@ es_version: true
 <br>
 ![A spinning torus on a terminal, using ASCII art](/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif)
 
-When I was starting to learn how to code I came a cross [donut.c](https://www.a1k0n.net/2011/07/20/donut-math.html), a program written by 
-**Andy Sloane**. His goal whas to render a donut spinning randomly in a terminal using obfuscated C. Even his code is shaped like a donut:
+When I was starting to learn how to code I came across [donut.c](https://www.a1k0n.net/2011/07/20/donut-math.html), a program written by 
+**Andy Sloane**. His goal was to render a donut spinning randomly in a terminal using obfuscated C. Even his code is shaped like a donut:
 
 ```
              k;double sin()
@@ -43,7 +43,7 @@ in(B),t=c*h*g-f*        e;int x=40+30*D*
 
 **donut.c** has a special place in my heart because of the moment I came across it,  at the time it felt like magic. Now that time has passed and I know much more than I did before, I want to write this article as the explanation I would have liked to have when I saw it for the first time.
 
-Another interesting property of **donut.c** is that it represents the minimal viable version of the graphics rendering pipeline. It is implemented on a reduced version of what we use to implement a render. And the best part is that it can be implemented using a single file, without the need for any additional dependencies beyond the C math library!
+Another interesting property of **donut.c** is that it represents the minimally  viable version of the graphics rendering pipeline. It is implemented on a reduced version of what we use to implement a renderer. And the best part is that it can be implemented using a single file, without the need for any additional dependencies beyond the C math library!
 
 In this article, we will step-by-step implement a more readable version of donut.c, this time in **C++**. Following the spirit of donut.c, we will have the following goals:
 
@@ -58,7 +58,7 @@ In this article, we will step-by-step implement a more readable version of donut
 
 The idea is to create a program that infinitely runs by replacing a character matrix of size $R$ in the terminal with a small variation of itself. However, a terminal is usually intended to print text continuously, leaving a record of the text that has been printed so far, unlike windows where a graphical interface is drawn and updated each iteration of the program. For this reason, the first thing we need to do is find a way to update a set of cells in a terminal instead of continuously stacking them. This varies a bit depending on the terminal emulator you use, but it follows more or less the same pattern in all of them: **ANSI escape codes**.
 
-ANSI escape codes are used to instruct a terminal emulator to perform a specific action, such as printing characters in a certain color or font, or moving the cursor, which is the case we are interested right now.
+ANSI escape codes are used to instruct a terminal emulator to perform a specific action, such as printing characters in a certain color or font or moving the cursor, which is the case we are interested in right now.
 
 We will use ANSI escape codes to instruct the terminal emulator to move the cursor. The cursor is the blinking white bar that marks the position of the next character to be entered. It is usually always at the end of the most recent text, but using ANSI escape codes we can tell it to move to the position we need.
 
@@ -67,7 +67,7 @@ We will use ANSI escape codes to instruct the terminal emulator to move the curs
 To learn more about ANSI escape codes, you can find a good explanation in [this article](https://notes.burke.libbey.me/ansi-escape-codes/). For now, we only need to know that the code we need has the following format `\033[<some_number>A`, where:
 
 1. The `\033[` character indicates that we are calling a function.
-2. The `A` character is the name of the function, which in this case means "move the cursor up a number of rows".
+2. The `A` character is the name of the function, which in this case means "move the cursor up a specific number of rows".
 3. The `<some_number>` character is the argument of the function, which in this case represents the number of rows we want to jump.
 
 Now, how can we use this? We want to print and replace a matrix of size $R \times R$, this can be done with the following loop:
@@ -97,7 +97,7 @@ while(true)
 }
 ```
 
-At the end of the double `for` loop, we will have printed `R` rows to the terminal, and the cursor will be on row `R+1`, because the last row also includes a newline character. Moreover, it will be at the **beginning** of row `R+1`, so to return to the original position, we only need to move the cursor `R` rows up, by printing the code `\033[RA` with `cout`:
+At the end of the double `for` loop, we will have printed `R` rows to the terminal, and the cursor will be on row `R+1` because the last row also includes a newline character. Moreover, it will be at the **beginning** of row `R+1`, so to return to the original position, we only need to move the cursor `R` rows up, by printing the code `\033[RA` with `cout`:
 
 ```cpp
 while(true)
@@ -116,19 +116,19 @@ Now that we have a consistent area where we can draw, we still need two things t
 
 There are two important considerations we need to address before we can implement our drawing loop:
 
-1. **A time interval:** Currently, our program is drawing as often as it can, but this can be very processor-intensive. We would like to impose a limit on the number of "frames" per second. Additionally, we will need the elapsed time for operations that depend on time, such as rotation.
+1. **A time interval:** Currently, our program is drawing as often as it can, but this can be very CPU-intensive. We would like to impose a limit on the number of "frames" per second. Additionally, we will need the elapsed time for operations that depend on time, such as rotation.
 2. **Where to store the drawing:** Since we want to draw a different value for each pixel, we need a matrix to store these data to send them to the drawing function.
 
 ## Time interval
 
-Now, we need to tell the program how often we want it to execute. To do this, we will put our program to sleep for a specified amount of time at the end of each iteration. To do this, we need to include `thread` and `chrono`. The first gives us access to the function we will use to put our thread to sleep, and the second allows us to work with time intervals. We can do this by adding the following ***includes*** to the beginning of our program:
+Now, we need to tell the program how often we want it to execute. To do this, we will put our program to sleep for a specified amount of time at the end of each iteration. We need to include `thread` and `chrono`. The former gives us access to the function we will use to put our thread to sleep, while the latter allows us to work with time intervals. We can do this by adding the following ***includes*** to the beginning of our program:
 
 ```cpp
 #include <chrono>
 #include <thread>
 ```
 
-Tu put the current thread (the **main thread**) to sleep, we will use the following line:
+To put the current thread (the **main thread**) to sleep, we will use the following line:
 
 ```cpp
 this_thread::sleep_for(chrono::milliseconds(30));
@@ -136,7 +136,7 @@ this_thread::sleep_for(chrono::milliseconds(30));
 
 * `this_thread::sleep_for(X)` is used to put the **main thread** to sleep for a specified amount of time.
 * `chrono::milliseconds(X)` represents an interval of X milliseconds.
-* We choose **30** milliseconds because if we want 30 FPS, then each iteration should last approximately 0.030 (1/30) seconds or 30 milliseconds. To simplify this program, we will assume that the main loop is always instantaneous.
+* We choose **30** milliseconds because if we want 30 FPS, then each iteration should last approximately 1/30 = 0.033 seconds, ~30 milliseconds. To simplify this program, we will assume that the main loop is always instantaneous.
 * This line is added at the end of the ***main loop*** to ensure that the program waits a bit after printing the current frame.
 
 Later, we will need a way to know how much time has passed since the start of the application to be able to perform operations that depend on time. For this reason, we will also use a variable to accumulate the time that has elapsed since the start. Consider the following code fragment:
@@ -180,7 +180,7 @@ while(true)
 }
 ```
 
-The additional whitespace that is printed after the character is not necessary, but I personally like it, it gives a cleaner finish to the resulting image. If you test the program as it is so far, you may see a matrix of meaningless characters. This is normal, and it is due to the fact that, depending on where you declared the `canvas` matrix, its memory may be uninitialized. You can also add a function to clear the canvas before starting, but we will do this later when we update the canvas.
+The additional whitespace that is printed after the character is not necessary, but I like it, it gives a cleaner finish to the resulting image. If you test the program as it is so far, you may see a matrix of meaningless characters. This is normal, and it is because, depending on where you declared the `canvas` matrix, its memory may be uninitialized. You can also add a function to clear the canvas before starting, but we will do this later when we update the canvas.
 
 Until now, you should have the following functionality implemented:
 
@@ -199,10 +199,10 @@ Taking advantage of the low resolution of the terminal, our solution will be a s
 
 1. We will create all the **points of the donut**, as we would for a 3D model.
 2. For each point, we will **transform it** so that the object is visible and has the appearance that we want in our canvas. This stage corresponds to the **Vertex Shader** in the computer graphics pipeline.
-3. After transforming it, we will **find the pixel** where this point falls, or rather its position in the canvas matrix. This step corresponds to **rasterization**, but simplified to adapt to the low resolution of the terminal.
+3. After transforming it, we will **find the pixel** where this point falls, or rather its position in the canvas matrix. This step corresponds to **rasterization** but is simplified to adapt to the low resolution of the terminal.
 4. Then, using the direction of the light and the normal at that point, we will **choose the character** that we will assign to that position of the matrix, coloring this pixel. This step corresponds to **shading or Fragment Shader**.
 
-Before we start, we will setup the function where we will work. The `update_canvas` function will be responsible for updating the character canvas in each iteration of the **main loop.** Since our canvas must be accessible to the **main function** we will pass this matrix by reference to the update function. Thus, the initial version is as follows:
+Before we start, we will set up the function where we will work. The `update_canvas` function will be responsible for updating the character canvas in each iteration of the **main loop.** Since our canvas must be accessible to the **main function** we will pass this matrix by reference to the update function. Thus, the initial version is as follows:
 
 ```cpp
 void update_canvas(char (&canvas)[R][R])
@@ -213,7 +213,7 @@ void update_canvas(char (&canvas)[R][R])
 
 
 
->The type of the parameter `canvas` may seem a bit strange, but the parentheses simply indicate that the parameter is a **character matrix** passed by reference, instead of an array of character references, which would generate a compilation error. It is important to pass this array by reference because otherwise, the entire contents of the array would be copied into the function arguments and this can be large. In addition, the external array would not be modified, so the resulting array would have to be returned by value, which would imply another copy.
+>The type of the `canvas` parameter may seem a bit strange, but the parentheses simply indicate that the parameter is a **character matrix** passed by reference, instead of an array of character references, which would generate a compilation error. It is important to pass this array by reference because otherwise the entire contents of the array would be copied into the function arguments and this can be a large amount of memory. In addition, the external array would not be modified, so the resulting array would have to be returned by value, which would imply yet another copy.
 
 We will add this function to our ***main loop***, just before printing the characters to the terminal.
 
@@ -233,7 +233,7 @@ Now that we have our `update_canvas` function in place, we can start working on 
 
 ## Generating vertices
 
-Before we start, we will clean up the canvas assigning a whitespace character `' '` to each cell, this way it will be "blank". We need to do this because we will only assing a color to a cell if it corresponds to a torus point. If there's no torus point for that cell, its content will be unmodified. 
+Before we start, we will clean up the canvas by assigning a whitespace character `' '` to each cell, this way it will be "blank". We need to do this because we will only assign a color to a cell if it corresponds to a torus point. If there's no torus point for that cell, its content will be unmodified. 
 
 ```cpp
 void update_canvas(char (&canvas)[R][R])
@@ -286,13 +286,13 @@ void torus_point(float theta, float phi, float torus_radius, float tube_radius, 
 
 To use `cos` and `sin` we will need to include `math`, with `#include <math>`.
 
-This function computes the three coordinates of a torus point using the equation we showed earlier. Note that, since we will return three values, the variables where the results are stored are passed by reference. As an additional exercise, you could implement a `struct` that represents a point or vector. In this article, we wont do this to limit ourselves to  variables, functions, and basic control structures.
+This function computes the three coordinates of a torus point using the equation we showed earlier. Note that, since we will return three values, the variables where the results are stored are passed by reference. As an additional exercise, you could implement a `struct` that represents a point or vector. In this article, we won't do this to limit ourselves to  variables, functions, and basic control structures.
 
-The torus is a **continuous surface**, which meanas that it has infinite points, but we only need a few.
+The torus is a **continuous surface**, which means that it has infinite points, but we only need a few.
 
 Since we have two values that parameterize the torus' surface, $\color{blue} \theta, \color{red} \phi$, then to get a set of vertices we need a sequence of pairs of values for $\color{blue} \theta, \color{red} \phi$. To choose these pairs,  we will iterate over the rings and vertices per ring, similar to how we would iterate over a matrix.
 
-To know how many pairs of values we will generate we need to choose a **resolution.** The resolution tells us how many rings and vertices per ring we will have. The higher the resolution of the model, the higher the quality of the resulting model will be, but it will also take up more memory and processing time. In our case, since the terminal has very low resolution, we don't need a very detailed model. For simplicity, we will use the same resolution for the number of rings and vertices.
+To know how many pairs of values we will generate we need to choose a **resolution.** The resolution tells us how many rings and vertices per ring we will have. The higher the resolution of the model, the higher the quality of the resulting model will be, but it will also take up more memory and processing time. In our case, since the terminal has a very low resolution, we don't need a very detailed model. For simplicity, we will use the same resolution for the number of rings and vertices.
 
 ![Este es un uno de los anillos del toroide, se puede ver como un corte en el tubo. Cada punto corresponde a un vértice en la superficie del toroide. Como la resolución es 8, tenemos 8 vértices por anillo.](/assets/images/torus-cpp/Untitled.png)
 
@@ -329,9 +329,9 @@ void update_canvas(char (&canvas)[R][R])
 }
 ```
 
-As we mentioned at the beginning, we will use a vertex-oriented approach, so we will iterate over the vertices of the model instead of the pixels of the image. For this reason most of the work will be focused in this loop that we just created.
+As we mentioned at the beginning, we will use a vertex-oriented approach, so we will iterate over the vertices of the model instead of the pixels of the image. For this reason, most of the work will be focused on this loop that we just created.
 
-At this point, we are able to update the canvas and generate vertices for the torus surface. However we still don't see anything in the terminal. We will add some temporary code that will help us to have better feedback on our work.
+At this point, we can update the canvas and generate vertices for the torus surface. However, we still don't see anything in the terminal. We will add some temporary code that will help us to have better feedback on our work.
 
 ```cpp
 void update_canvas(char (&canvas)[R][R])
@@ -361,19 +361,19 @@ void update_canvas(char (&canvas)[R][R])
 - With this program, we are assigning the pixel as `#` if it contains a vertex.
 - Counterintuitively, the **X** coordinate corresponds to the second index of the matrix. This is because that index is the one that advances the positions in the matrix horizontally. Analogously, the Y coordinate corresponds to the first index in the matrix.
 - Essentially, we are using **orthographic projection**, since the object we see will not consider depth.
-- Later we will modify this function to include more appropriate coloring and perspective projection, but for now this will be enough for testing.
-- In this program we can also see the relationship between the coordinates of the canvas and the torus.
+- Later we will modify this function to include more appropriate coloring and perspective projection, but for now,this will be enough for testing.
+- In this program, we can also see the relationship between the coordinates of the canvas and the torus.
 
-The following image shows the relationship between the canvas and the torus geometry. The position `[0][0]` of the matrix corresponds to the points in the interval $[0,1)\times[0,1)$, the slot `[0][1]` to the points in $[0,1)\times[1,2)$, and so on. In other words, the canvas is a window that goes from the origin to the point $(R,R)$.
+The following image shows the relationship between the canvas and the torus geometry. The position `[0][0]` of the matrix corresponds to the points in the interval $[0,1)\times[0,1)$, the slot `[0][1]` to the points in $[0,1)\times[1,2)$, and so on. In other words, the canvas is a window that goes from the origin to the point $(R, R)$.
 
 ![Untitled](/assets/images/torus-cpp/Untitled%201.png)
 
-Note that the Y-axis is reflected downwards in our canvas, since the row indices increase downwards, while in the Cartesian plane they increase upwards. In other words, the positive Y-axis points downwards, just like in Godot. For this reason, the image you will see at this point will be the torus arc in the first quadrant of the plane, but reflected across the X-axis.
+Note that the Y-axis is reflected downwards in our canvas, since the row indices increase downwards, while in the Cartesian plane, they increase upwards. In other words, the positive Y-axis points downwards, just like in Godot. For this reason, the image you will see at this point will be the torus arc in the first quadrant of the plane but reflected across the X-axis.
 
 ## Transforming vertices
 
 
-Although we are able to visualize the torus in the terminal, it is possible that we cannot see it completely or that it is incorrectly located in the image. For this reason, we will add transformation functions below to be able to see the torus.
+Although we can visualize the torus in the terminal, it is possible that we cannot see it completely or that it is incorrectly located in the image. For this reason, we will add transformation functions below to be able to see the torus.
 
 
 We will add the following translation function:
@@ -388,7 +388,7 @@ void translate(float offset_x, float offset_y, float offset_z, float x, float y,
 
 This function simply takes the original coordinates and adds a displacement. We can use it to move the torus vertices on the canvas.
 
-We will also add the scaling function, since it is possible that the torus is too large to be visible on the canvas.
+We will also add the scaling function since the torus may be too large to be visible on the canvas.
 
 ```cpp
 void scale(float scale, float x, float y, float z, float& out_x, float& out_y, float& out_z)
@@ -399,7 +399,7 @@ void scale(float scale, float x, float y, float z, float& out_x, float& out_y, f
 }
 ```
 
-The scaling function is useful for testing purposes, but later we will use **perspective projection** to scale the torus by modifying its distance to the camera. For now, scaling will help us to actually see the torus.
+The scaling function is useful for testing purposes, but later we will use **perspective projection** to scale the torus by modifying its distance to the camera. For now, scaling will help us to see the torus.
 
 With the following code, just after creating the torus vertices, we can center the torus on our canvas:
 
@@ -429,9 +429,9 @@ With the following code, just after creating the torus vertices, we can center t
 
 ![OrdenDeTransformaciónEn.png](/assets/images/torus-cpp/OrdenDeTransformaciónEn.png)
 
-> 📝 **Nota:** It is actually possible to rotate after translating, using the rotation matrix that also depends on the rotation axis. The rotation matrices we are using assume that the rotation axis is at the origin (each axis of the origin depending on the rotation), and we will stick with them for simplicity.
+> 📝 **Note:** It is possible to rotate after translating, using the rotation matrix that also depends on the rotation axis. The rotation matrices we are using assume that the rotation axis is at the origin (each axis of the origin depending on the rotation), and we will stick with them for simplicity.
 
-## Proyección en perspectiva
+## Perspective Projection
 
 *Projection* is the process of transforming a 3D geometric representation into a 2D one. In our case, we want to transform 3D points into a 2D image. To get a projection we just need a function to transform 3D points into 2D points.
 
@@ -441,13 +441,13 @@ $$
 Ortho(x,y,z) = (x,y)
 $$
 
-This transformation is simple and allows us to visualize 3D objects easily, as we have done so far. However, it does not consider depth, so objects that are far away look the same size as if they were closer. Intuitively, this is a consequence of ignoring the Z coordinate. Our projection function is ignoring the depth of vertices.
+This transformation is simple and allows us to visualize 3D objects easily, as we have done so far. However, it does not consider depth, so objects that are far away look the same size as if they were closer. Intuitively, this is a consequence of ignoring the Z coordinate. Our projection function ignores the depth of vertices.
 
 ![Proyección ortográfica: Los puntos del cubo se transforman a puntos en el plano simplemente descartando su coordenada Z.](/assets/images/torus-cpp/Proyeccin_ortogrfica_(1).png)
 
 **Orthographic Projection**: Vertices inside the cube are projected into the plane by discarding their Z coordinate.
 
-Now we will implement **perspective projection**, a style of projection that takes depth into account, so that distant objects appear smaller than objects close to the camera. The idea is to scale the points $(x,y)$ linearly with respect to their $z$ coordinate.  For this, let's consider the following image:
+Now we will implement **perspective projection**, a style of projection that takes depth into account so that distant objects appear smaller than objects close to the camera. The idea is to scale the points $(x,y)$ linearly with respect to their $z$ coordinate.  For this, let's consider the following image:
 
 ![Proyección en perspectiva (1).png](/assets/images/torus-cpp/Proyeccin_en_perspectiva_(1).png)
 
@@ -462,13 +462,13 @@ $$
 \textbf{(b)} \frac{|AD|}{|AB|} = \frac{|AE|}{|AC|} = \frac{|DE|}{|BC|}
 $$
 
-In this example, the line segment $\color{blue}{DE}$ is parallel to $BC$, and the intersection points will introduce this relationships. As we will see later, the most useful relationship will be $(b)$, since it will allow us to relate the length of the intersection line $\color{blue}{DE}$ with the length of the line segments it intersects.
+In this example, the line segment $\color{blue}{DE}$ is parallel to $BC$, and the intersection points will introduce these relationships. As we will see later, the most useful relationship will be $(b)$, since it will allow us to relate the length of the intersection line $\color{blue}{DE}$ with the length of the line segments it intersects.
 
-Now let's see with more details the definition of our virtual plane to indentify where to use the Thales theorem:
+Now let's see with more detail the definition of our virtual plane to identify where to use the Thales theorem:
 
 ![Proyección en Perspectiva lateral En.png](/assets/images/torus-cpp/Proyeccin_en_Perspectiva_lateral_En.png)
 
-In this image, we are seeing a lateral perspective of the camera. Assuming that it is located at the origin, we can identify the following values:
+In this image, we see a lateral perspective of the camera. Assuming that it is located at the origin, we can identify the following values:
 
 1. $z'$ is the distance from the camera to the virtual plane, this is a value that **we can define manually**.
 2. $y'$ is **the value we are looking for**, for the projection of the point $(x,y,z)$ in the virtual plane.
@@ -492,7 +492,7 @@ $$
 x'=\frac{xz'}{z}
 $$
 
-To find such value we can consider the projection in the $XZ$ plane instead of $YZ$ that we used in the previous image. This projection corresponds to top-down camera view.
+To find such a value we can consider the projection in the $XZ$ plane instead of the $YZ$ that we used in the previous image. This projection corresponds to a top-down camera view.
 
 Finally, our perspective projection function is:
 
@@ -545,7 +545,7 @@ Now that we have perspective projection, the parts of the torus that are farthes
 
 ## Shading
 
-Shading is simply choosing a color for each pixel of the image. We will not use real colors, but rather ASCII characters. In our case the problem is reduced to finding the correct character for each "pixel". We will use denser characters according to the "brightness" of the color at each point. The characters we will use, ordered from darker to lighter, are:
+Shading is simply choosing a color for each pixel of the image. We will not use real colors, but rather ASCII characters. In our case, the problem is reduced to finding the correct character for each "pixel". We will use denser characters according to the "brightness" of the color at each point. The characters we will use, ordered from darker to lighter, are:
 
 ```
 .,-~:;=!*#$@
@@ -561,19 +561,19 @@ To achieve this we will use the **dot product** between the direction of light a
 
 **Examples of dot product:** $\color{red}a$ and $\color{green}b$ are perpendicular, so their dot product is 0. $\color{red}a$ and $\color{blue}c$ are antiparallel, so their dot product is -1, and $\color{blue}c$ is parallel to itself, so the product with itself is 1. Additionally, all vectors between $\color{blue}c$ and $\color{green}b$ multiplied with $\color{red}a$ return negative values, and all vectors between $\color{blue}c$ and $\color{green}b$ multiplied with $\color{blue}c$ return positive values.
 
-Now that we have an idea about how to color our piels with characters, we need a plan to make it happen. The following steps are:
+Now that we have an idea about how to color our pixels with characters, we need a plan to make it happen. The following steps are:
 
 1. Create a function to **compute the normal** for each vertex in the torus surface.
 2. Create a function to **compute the dot product** between two vectors.
 3. Add a few variables to store the coordinates of a **light direction vector**.
 4. **Transform the normal vector** so that it's consistent with the previous transformations for our torus.
-5. **Choose a diferent character** depending on the magnitude of the dot product between the light direction and the normal direction in each vertex.
+5. **Choose a different character** depending on the magnitude of the dot product between the light direction and the normal direction in each vertex.
 
 A problem we haven't solved so far is the **drawing order**. We have been drawing each vertex independently of whether there is another vertex closer to the camera. To solve this, we will use **z-buffering**. We will create a matrix of the same size as the canvas, which we will call the **z-buffer**. This matrix will store the distance of the closest vertex drawn at each position on the canvas. If the new vertex we are about to draw is further away than the current vertex in the z-buffer, then we will ignore it.
 
 Now that we have a plan, let's get to work. We will start by writing the **function to compute the torus normal**:
 
-Note that the torus is a [solid of revolution](https://en.wikipedia.org/wiki/Solid_of_revolution), a circle translated from the origin and then rotated around it. We now that the normal in any point of a circle is parallel to the vector that comes from the center to that point:
+Note that the torus is a [solid of revolution](https://en.wikipedia.org/wiki/Solid_of_revolution), a circle translated from the origin and then rotated around it. We know that the normal in any point of a circle is parallel to the vector that comes from the center to that point:
 
 ![NormalCircunferencia.png](/assets/images/torus-cpp/NormalCircunferencia.png)
 
@@ -583,7 +583,7 @@ If we recall the torus geometry, we notice that we can compute a vertex in the m
 
 ![Los parámetros **Ra, Rb**,  corresponden a los radios del círculo y el tubo respectivamente, los ejes son **X**, **Y**, **Z**](/assets/images/torus-cpp/image_2023-06-06_201607213.png)
 
-In this example, if we force $\color{blue}{R_b} = 0$, then the point we get will be always in the middle of the tube. With this knowledge we can write the following function:
+In this example, if we force $\color{blue}{R_b} = 0$, then the point we get will be always in the middle of the tube. With this knowledge, we can write the following function:
 
 ```cpp
 void torus_normal(float theta, float phi, float torus_radius, float tube_radius, float &out_x, float &out_y, float &out_z)
@@ -610,12 +610,12 @@ void torus_normal(float theta, float phi, float torus_radius, float tube_radius,
 }
 ```
 
-- We firt compute a point in the torus surface using the `torus_point` function we defined earlier.
+- We first compute a point in the torus surface using the `torus_point` function we defined earlier.
 - Then we use that same function with tube radius = 0 to get a point in the center of the ring.
 Then we compute the normal vector as the difference between these two vectors
 - Finally, since we know that the magnitude of that vector is equal to the tube radius, we can normalize the normal vector using the tube radius as magnitude.
 
-With this function we can now compute the normal at each point in the torus surface using the same parameters we used to compute the vertex.
+With this function, we can now compute the normal at each point in the torus surface using the same parameters we used to compute the vertex.
 
 Now we will create a function to compute the dot product between two vectors, it's really simple:
 
@@ -636,11 +636,11 @@ Now we will define the variables in the `update_canvas` function for the coordin
     LIGHT_DIR_Z = LIGHT_DIR_Z / magnitude;
 ```
 
-With these variables we define the direction of the light, which is on the $y$ axis and points downwards and forwards. Note that it is **important to normalize this vector** so that our next calculations are accurate.
+With these variables, we define the direction of the light, which is on the $y$ axis and points downwards and forwards. Note that it is **important to normalize this vector** so that our next calculations are accurate.
 
 Before using the normal vector, we need to transform it so that it is consistent with the transformations we have applied to the torus.
 
-The mathematics required to transform normal vectors is a bit beyond the scope of this article, but for now it is enough to know that in this case we will only need to apply the same rotations that were applied to the point in the same order:
+The mathematics required to transform normal vectors is a bit beyond the scope of this article, but for now, it is enough to know that in this case we will only need to apply the same rotations that were applied to the point in the same order:
 
 ```cpp
 // Update Canvas:
@@ -703,10 +703,10 @@ Finally, let's assign the right color to each pixel:
     }
 ```
 
-- In this code we define an array of characters sorted from "darker" to "lighter"
+- In this code, we define an array of characters sorted from "darker" to "lighter"
 - We compute the dot product between the normal and the directional light
 - We make sure that the value of the dot product is correct.
-- If the dot product is greater or equal to 0, it means that the normal is "parallel" to to the light vector, and therefore it's a point in the surface that doesn't looks towards the light direction. Otherwise it faces the light and reflects it with higher intensity.
+- If the dot product is greater or equal to 0, it means that the normal is "parallel" to the light vector, and therefore it's a point in the surface that doesn't look towards the light direction. Otherwise, it faces the light and reflects it with higher intensity.
 
 At this point, it is possible that the image you see does not have the correct colors. This is because we are not checking if we are drawing over a pixel that is already the closest to the screen. To do this, we will use a **z-buffer**. It's a matrix of the same size as our canvas where we store the Z component of the point that we have drawn in each pixel. We only draw vertices if the pixel it is assigned is empty or has a point that is further in the 3D space.
 
@@ -751,7 +751,7 @@ Finally, to use the z-buffer we simply check that the point we are about to draw
     }
 ```
 
-And with this, we have finished our program. This was a long journey, but along the way we learned the basics of computer graphics, and we managed to implement the rendering of a 3D geometric figure using only basic control structures. With this program as a base, it is easier to extend the theory to understand rendering with graphical APIs, such as OpenGL.
+And with this, we have finished our program. This was a long journey, but along the way, we learned the basics of computer graphics, and we managed to implement the rendering of a 3D geometric figure using only basic control structures. With this program as a base, it is easier to extend the theory to understand rendering with graphical APIs, such as OpenGL.
 
 With a little more work, it is possible to extend this simple scheme to create more complex rendering styles. You could add a 3D model parser to read the vertices of a 3D along with their normals to create a terminal render that works for any type of 3D geometry instead of just toroids. Going a little further, we could map RGB colors to some ANSI color codes and use UVs to create a simple color rendering. We could even turn it into a *recursive Ray Tracer* by changing the *point-by-point* approach we use to a *pixel-by-pixel* approach, the sky is the limit!
 
