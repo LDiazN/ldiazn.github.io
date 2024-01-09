@@ -3,7 +3,7 @@ title: "[proto-ecs] Introduction"
 layout: post
 author: Luis Diaz
 tags: [Rust, Game Engine, proto-ecs]
-miniature: https://www.rust-lang.org/logos/rust-logo-512x512-blk.png
+miniature: /assets/images/proto-ecs/workflow.png
 description: In this post, I introduce the core concepts of our Rust Game Engine, proto-ecs. We will learn about the general central ideas that power its object model.
 language: en
 repo: 
@@ -63,7 +63,7 @@ Our engine has the following components:
 * **Local Systems:** Functions that operate over **a single entity**. They can specify which datagroups expect from the entities they operate on, and implement **update logic**. They are functions because they are **stateless**, their state is represented as the current values of datagroups in the entities they operate in. **Local Systems don't operate in more than one entity at a time.** Unlike traditional ECSs, local systems are **opt-in** and entities should specify which local systems they want to execute. A local system can have as many functions as stages, more on that later.
 * **Global Systems:** These are **singleton objects**** that move data between entities, and implement inter-entity update logic. They specify which datagroups the entities should provide, they can have **internal state** and are **opt-in**: entities specify if they want to be part of some global systems.
 * **Stages:** A stage represents a **segment of a frame step**. It runs all the **update functions** and **book-keeping operations** that might be needed after they are called. There are many stages so that update functions have plenty of room to specify execution order concerning other systems. Each stage calls the update function for that stage in all entities and global systems in the right order. 
-* **Entities:** Unlike traditional ECSs, entities are actual objects instead of IDs, they **store** the entity state represented as a list of datagroups, and keep track of which local systems are required for that entity. Entities are created in a **data-driven** manner, they are not objects where the datagroups are a class member, an entity is defined by a collection of datagroups and systems.
+* **Entities:** Unlike traditional ECSs, entities are actual objects instead of IDs, they **store** the entity state represented as a list of datagroups and keep track of which local systems are required for that entity. Entities are created in a **data-driven** manner, they are not objects where the datagroups are a class member, an entity is defined by a collection of datagroups and systems.
 
 | ![Entity diagram](/assets/images/proto-ecs/entities.png) |
 |:--:|
