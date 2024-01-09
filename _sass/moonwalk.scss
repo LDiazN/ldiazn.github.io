@@ -49,6 +49,16 @@ table, th, td {
   padding: 0.4em;
 }
 
+.invisible-table 
+{
+  table, th, td {
+    width: 100%;
+    border: 0 solid var(--bg);
+    border-collapse: collapse;
+    padding: 0.4em;
+  }
+}
+
 div.highlighter-rouge pre code, pre code.highlighter-rouge {
   display: block;
   overflow-x: auto;
@@ -274,6 +284,9 @@ p code, li code {
   text-decoration: none;
   list-style: none;
   margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
   a {
     text-decoration: none;
     color: var(--text)
