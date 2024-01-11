@@ -61,7 +61,7 @@ Our engine has the following components:
 
 * **Datagroups:** As their name implies, they are data storage. They can implement logic to encourage encapsulation, just **not update logic**. Datagroups would be considered components in a standard ECS. **Datagroups can't store references to other datagroups, entities, or global systems**
 * **Local Systems:** Functions that operate over **a single entity**. They can specify which datagroups expect from the entities they operate on, and implement **update logic**. They are functions because they are **stateless**, their state is represented as the current values of datagroups in the entities they operate in. **Local Systems don't operate in more than one entity at a time.** Unlike traditional ECSs, local systems are **opt-in** and entities should specify which local systems they want to execute. A local system can have as many functions as stages, more on that later.
-* **Global Systems:** These are **singleton objects**** that move data between entities, and implement inter-entity update logic. They specify which datagroups the entities should provide, they can have **internal state** and are **opt-in**: entities specify if they want to be part of some global systems.
+* **Global Systems:** These are **singleton objects**** that move data between entities, and implement inter-entity update logic. They specify which datagroups the entities should provide, they can have **internal state** and are **opt-in**: entities specify if they want to be part of some global system.
 * **Stages:** A stage represents a **segment of a frame step**. It runs all the **update functions** and **book-keeping operations** that might be needed after they are called. There are many stages so that update functions have plenty of room to specify execution order concerning other systems. Each stage calls the update function for that stage in all entities and global systems in the right order. 
 * **Entities:** Unlike traditional ECSs, entities are actual objects instead of IDs, they **store** the entity state represented as a list of datagroups and keep track of which local systems are required for that entity. Entities are created in a **data-driven** manner, they are not objects where the datagroups are a class member, an entity is defined by a collection of datagroups and systems.
 
@@ -93,17 +93,17 @@ The **game state** is really simple, it's just:
 
 ## Hierarchies
 
-A problem we haven't addressed so far is how we work with hierarchies, specifically spatial hierarchies. Since entities can't store references to other entities, we couldn't model spatial hierarchies. Even if we could, with the model we have defined so far it would be impossible to keep a consistent update order between entities and their local systems. 
+A problem we haven't addressed so far is how we work with hierarchies, specifically spatial hierarchies. Since entities can't store references to other entities, we couldn't model spatial hierarchies. Even if we could, with the model we have defined so far it would be impossible to keep a consistent update order between entities and their local systems. The biggest issue here starts with transforms; when you modify a transform, you also have to update all children of the modified entity to update their parent transform, but since they are all executing at the same time, you could run into race conditions. 
 
-To solve this issue we define a special engine-provided **Transform Datagroup** that's the only datagroup allowed to have references to other entities, and those references are not public to the user. There are no `GetParent` operations. The transform also holds the local transformation matrix for this entity and its parent's transformation matrix. When the parent changes its transform matrix, the Transform Datagroup will automatically update the transform for each of its children.
+To solve this issue we define a special engine-provided **Transform Datagroup** that is the only datagroup allowed to have references to other entities, and those references are not public to the user. There are no `GetParent` operations. The transform also holds the local transformation matrix for this entity and its parent's transformation matrix. When the parent changes its transform matrix, the Transform Datagroup will automatically update the transform for each of its children.
 
-When an entity has a spatial relationship to other entities, the update order is restricted in a way so that the child entity is always updated after the parent entity in the same thread:
+When an entity has a spatial relationship to other entities, the update order is restricted in a way so that the **child entity is always updated after the parent entity**:
 
 | ![Entities Thread Scheduling](/assets/images/proto-ecs/spatial-entity-update.png) |
 |:--:|
-|Entities with spatial dependencies are scheduled to run in the same thread, while entities without spatial relationships can run in any thread. In this example, all entities in the orange hierarchy are scheduled to the same thread even when they could run and finish earlier in other threads.| 
+|Entities with spatial dependencies are scheduled to run after their parent, while entities without spatial relationships can run in any thread. In this example, **e**, **a**, and **f** run as soon as possible. When **a** is finished, **b** and **c** can start in any thread, **even at the same time**, since they don't care about each other's execution. And finally, **d** has to wait until **b** is finished.| 
 
-The idea here is that all entities will be **updated after their parents**. Note that since spatial relationships change the execution order within a frame, we don't allow reparenting operations to occur before the frame is ended. All reparenting operations are enqueued on request and delivered after the frame has finished. 
+The idea here is that all entities will be **updated after their parents**. Note that since spatial relationships change the execution order within a frame, we don't allow reparenting operations to occur before the frame ended. All reparenting operations are enqueued on request and delivered after the frame has finished. 
 
 ## Execution order
 
