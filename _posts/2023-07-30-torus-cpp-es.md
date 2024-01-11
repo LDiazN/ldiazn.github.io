@@ -41,7 +41,7 @@ in(B),t=c*h*g-f*        e;int x=40+30*D*
 
 **donut.c** tiene un lugar especial en mi corazón por el momento en que me topé con él, en su momento se sentía como magia. Ahora que ha pasado el tiempo y sé mucho más que antes, quiero escribir este artículo como la explicación que me habría gustado tener cuando lo vi por primera vez. 
 
-Otra propiedad interesante de **donut.c** es que representa la versión mínima viable del pipeline de computación gráfica, se implementa sobre una versión reducida de las bases que usamos para implementar un render. Y lo mejor de todo es que se puede implementar usando un único archivo, sin necesidad de dependencias adicionales más allá de la librería de matemáticas de C. 
+Una propiedad interesante de **donut.c** es que representa la versión mínima viable del pipeline de computación gráfica, se implementa sobre una versión reducida de las bases que usamos para implementar un render. Y lo mejor de todo es que se puede implementar usando un único archivo, sin necesidad de dependencias adicionales más allá de la librería de matemáticas de C. 
 
 En este artículo implementaremos paso a paso una versión más legible de donut.c, esta vez en C++. Siguiendo el espíritu de donut.c, tendremos los siguientes objetivos:
 
@@ -49,7 +49,7 @@ En este artículo implementaremos paso a paso una versión más legible de donut
 2. El código debe ser **lo más sencillo posible**, trataremos de usar solo funciones y estructuras de control básicas.
 3. **No importaremos nada adicional**, más allá de algunas librerías de C++ para imprimir, tomar el tiempo, y hacer cálculos matemáticos. 
 4. Por fines didácticos, nuestro programa estará más enfocado en la **legibilidad** que en la ofuscasión, a diferencia del programa de Sloane.
-5. Y, finalmente, ¡vamos a implementar una dona (torus o toroide) rotando en la terminal!
+5. Finalmente, ¡vamos a dibujar una dona (torus o toroide) rotando en la terminal!
 
 # Dibujando en la terminal
 
@@ -104,7 +104,7 @@ Podemos visualizar esto más fácilmente con un ejemplo:
 
 ![Ejemplo mover cursor en terminal.jpg](/assets/images/torus-cpp//Ejemplo_mover_cursor_en_terminal.jpg)
 
-Ahora que tenemos un área consistente donde dibujar, aun nos faltan dos cosas para empezar a trabajar en el renderizado, y eso es:
+Ahora que definimos un área consistente donde dibujar, aun nos faltan dos cosas para empezar a trabajar en el renderizado:
 
 - **Un intervalo de tiempo:** Ahora mismo nuestro programa está dibujando cada vez que puede, pero esto puede ser muy intensivo para el procesador y nos gustaría indicar un límite de “fotogramas” por segundo. Además, necesitaremos el tiempo transcurrido para operaciones que dependan del tiempo, como la rotación.
 - **Donde almacenar el dibujo:** Como queremos dibujar un valor distinto por pixel, entonces necesitamos una matriz donde guardar estos datos para mandarlos a dibujar
@@ -126,10 +126,10 @@ this_thread::sleep_for(chrono::milliseconds(30));
 
 - `this_thread::sleep_for(X)` se usa para poner al ***main thread*** a dormir por una cantidad especificada de tiempo
 - `chrono::milliseconds(X)` representa un intervalo de X milisegundos
-- Escogemos **30** milisegundos porque si queremos 30 FPS, entonces cada iteración debería durar aproximadamente 0.030 (1/30) segundos  o 30 milisegundos. Para simplificar este programa asumiremos que el *main loop* siempre es instantáneo.
+- Escogemos 30 milisegundos para alcanzar la marca de 30 FPS, lo que significa que cada iteración debería durar aproximadamente 0.030 (1/30) segundos o 30 milisegundos. Para simplificar este programa asumiremos que el _main loop_ siempre es instantáneo.
 - Esta línea se añade al final del ***main loop*** para garantizar que el programa espere un poco luego de haber impreso el fotograma actual
 
-Más adelante necesitaremos una forma de saber cuanto tiempo ha pasado desde el inicio de la aplicación para poder hacer operaciones que dependan del tiempo, por esta razón también usaremos una variable para acumular el tiempo que ha transcurrido desde el inicio. Consideremos el siguiente fragmento de código:
+Más adelante necesitaremos una forma de saber cuanto tiempo ha pasado desde el inicio de la aplicación para poder hacer operaciones que dependan del tiempo.Por esta razón, usaremos una variable que indique el tiempo que ha transcurrido desde el inicio.
 
 ```cpp
 // Main loop
@@ -149,7 +149,7 @@ while (true)
 ```
 
 - `frame_start` es un objeto que representa un momento en el tiempo. En particular, representa el inicio del frame que está actualmente en curso siendo procesado.
-- `time_passed` es la cantidad de tiempo que ha pasado desde el inicio del programa en **segundos**
+- `time_passed` es la cantidad de tiempo que ha transcurrido desde el inicio del programa en **segundos**
 - Cuando se inicia el ciclo, guardamos en `now` el momento en que entramos en el ciclo, y luego calculamos la diferencia de tiempo que hubo entre `now` y la última vez que se inició el ciclo, `frame_start` . Esta diferencia se la sumamos al acumulador del tiempo que ha pasado, `time_passed`.
 - La línea `chrono::duration_cast<chrono::milliseconds>(now - frame_start).count() / 1000.0f;` simplemente está contando la cantidad de milisegundos que hay entre `now` y `frame_start` , y convirtiendolo a segundos.
 
@@ -176,10 +176,10 @@ Hasta ahora, deberías tener las siguientes funcionalidades implementadas:
 
 1. Se puede imprimir en terminal reemplazando la imagen anterior en lugar de llenando la terminal con muchas repeticiones de la misma imagen
 2. Existe un intervalo de tiempo entre cada fotograma: las iteraciones del main loop no se ejecutan de inmediato
-3. Tenemos una variable que anota el tiempo que ha pasado desde el inicio del programa y se actualiza en cada iteración.
+3. Tenemos una variable que contiene el tiempo que ha transcurrido desde el inicio del programa y se actualiza en cada iteración.
 4. El contenido de los pixeles se guarda en una matriz de tamaño \$R\$, la resolución escogida, y se imprime desde esta matriz.
 
-Confirma que todo ha ido bien hasta el momento antes de continuar, y empezaremos a trabajar en el dibujo de nuestra dona.
+Confirma que todo ha ido bien hasta el momento antes de continuar, y empezaremos a trabajar en el dibujo de nuestra [dona](https://en.wikipedia.org/wiki/Torus).
 
 # Actualización del canvas
 
@@ -187,7 +187,7 @@ Para actualizar el canvas, nuestra primera intuición podría ser iterar pixel p
 
 Aprovechándonos de la poca resolución de la terminal, nuestra solución será una simplificación del pipeline de computación gráfica. La idea será la siguiente:
 
-1. Crearemos todos los **puntos del torus**, como los de un modelo 3D. 
+1. Crearemos todos los **puntos del [torus](https://en.wikipedia.org/wiki/Torus)**, como los de un modelo 3D. 
 2. Por cada punto, **lo transformaremos** para que el objeto sea visibile y tenga el aspecto que deseamos en nuestro canvas. Esta etapa corresponde al **Vertex Shader** en el pipeline de computación gráfica
 3. Luego de transformarlo, **buscaremos el pixel** donde cae este punto, o mejor dicho su posición en la matriz de canvas. Este paso corresponde al **rasterizado**, pero simplificado para adaptarlo a la poca resolución de la terminal.
 4. Luego, usando la dirección de la luz y la normal en ese punto, **escogeremos el caracter** que asignaremos a esa posición de la matriz, coloreando este pixel. Este paso es correspondiente al ***shading o Fragment Shader***.
@@ -360,7 +360,7 @@ En la siguiente imagen se ilustrala relación entre el canvas y la geometría de
 
 ![Untitled](/assets/images/torus-cpp/Untitled%201.png)
 
-Notemos que el eje Y está reflejado hacia abajo en nuestor canvas, dado que los índices de las filas aumentan hacia abajo, mientras que en el plano cartesiano aumentan hacia arriba. Es decir, el eje Y positivo apunta hacia abajo, tal como en Godot. Por esta razón, la imagen que verás para este momento será el arco de toroide en el primer cuadrante del plano, pero reflejado respecto al eje X. 
+Notemos que el eje Y está reflejado hacia abajo en nuestor canvas, dado que los índices de las filas aumentan hacia abajo, mientras que en el plano cartesiano aumentan hacia arriba. Es decir, el eje Y positivo apunta hacia abajo, tal como en [Godot](https://godotengine.org/). Por esta razón, la imagen que verás para este momento será el arco de toroide en el primer cuadrante del plano, pero reflejado respecto al eje X. 
 
 ## Transformando vértices
 
@@ -512,7 +512,7 @@ $$
 Ortho(x,y,z) = (x,y)
 $$
 
-Esta transformación es simple y nos permite visualizar los objetos en 3D fácilmente como hemos hecho hasta ahora. Sin embargo no considera la profundidad, así que los objetos que están lejos se ven del mismo tamaño que si estuvieran cerca. Intuitivamente, esto es una consecuencia de ignorar la coordenada Z, nuestra función de proyección está ignorando la profundidad de los puntos.  
+Este tipo de projección es la que hemos usado hasta ahora. Es simple y nos facilita visualizar los objetos en 3D. Sin embargo no considera la profundidad, así que los objetos que están lejos se ven del mismo tamaño que si estuvieran cerca. Intuitivamente, esto es una consecuencia de ignorar la coordenada Z, nuestra función de proyección está ignorando la profundidad de los puntos.  
 
 ![Proyección ortográfica: Los puntos del cubo se transforman a puntos en el plano simplemente descartando su coordenada Z.](/assets/images/torus-cpp/Proyeccin_ortogrfica_(1).png)
 
@@ -829,3 +829,5 @@ Con un poco más de trabajo es posible extender este esquema sencillo para hacer
 El código resultante de este artículo se puede encontrar en el siguiente enlace en GitHub:
 
 [GitHub - LDiazN/torus.cpp: A simple torus render in terminal inspired by donut.c](https://github.com/LDiazN/torus.cpp)
+
+![Toroide que gira en una terminal, usando arte ASCII](/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif)

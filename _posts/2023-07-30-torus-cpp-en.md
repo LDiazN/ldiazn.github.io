@@ -41,9 +41,9 @@ in(B),t=c*h*g-f*        e;int x=40+30*D*
              ..,--------,*/
 ```
 
-**donut.c** has a special place in my heart because of the moment I came across it,  at the time it felt like magic. Now that time has passed and I know much more than I did before, I want to write this article as the explanation I would have liked to have when I saw it for the first time.
+**donut.c** has a special place in my heart because, the moment I found it, it felt like magic. Now that time has passed and I know much more than I did before, I want to write this article as the explanation I would have liked to have when I saw it for the first time.
 
-Another interesting property of **donut.c** is that it represents the minimally  viable version of the graphics rendering pipeline. It is implemented on a reduced version of what we use to implement a renderer. And the best part is that it can be implemented using a single file, without the need for any additional dependencies beyond the C math library!
+One interesting property of  donut.c is that it represents the minimally viable version of the graphics rendering pipeline. It develops the basic foundational concepts of a renderer. And the best part is that it can be implemented using a single file, without the need for any additional dependencies beyond the C math library!
 
 In this article, we will step-by-step implement a more readable version of donut.c, this time in **C++**. Following the spirit of donut.c, we will have the following goals:
 
@@ -51,7 +51,7 @@ In this article, we will step-by-step implement a more readable version of donut
 2. The code should be as **simple as possible**, using only  functions and basic control structures.
 3. **No additional imports** will be used, beyond some standard C++ libraries for printing, timing, and mathematical calculations.
 4. For educational purposes, our program will be more focused on **readability** than obfuscation, unlike Sloane's program.
-5. Finally, we will implement a rotating donut (torus or toroid) in the terminal!
+5. Finally, we will render a rotating donut (torus or toroid) in the terminal!
 
 # Drawing in a terminal
 
@@ -112,9 +112,7 @@ This is easier to visualize with an example:
 
 ![Cursor movement example in a terminal](/assets/images/torus-cpp//Ejemplo_mover_cursor_en_terminal.jpg)
 
-Now that we have a consistent area where we can draw, we still need two things to start working on rendering:
-
-There are two important considerations we need to address before we can implement our drawing loop:
+Now that we defined a consistent area where we can draw, we still need two things to start working on rendering:
 
 1. **A time interval:** Currently, our program is drawing as often as it can, but this can be very CPU-intensive. We would like to impose a limit on the number of "frames" per second. Additionally, we will need the elapsed time for operations that depend on time, such as rotation.
 2. **Where to store the drawing:** Since we want to draw a different value for each pixel, we need a matrix to store these data to send them to the drawing function.
@@ -136,10 +134,10 @@ this_thread::sleep_for(chrono::milliseconds(30));
 
 * `this_thread::sleep_for(X)` is used to put the **main thread** to sleep for a specified amount of time.
 * `chrono::milliseconds(X)` represents an interval of X milliseconds.
-* We choose **30** milliseconds because if we want 30 FPS, then each iteration should last approximately 1/30 = 0.033 seconds, ~30 milliseconds. To simplify this program, we will assume that the main loop is always instantaneous.
+* We picked **30** milliseconds to fulfill a 30 FPS target, which means each iteration should take approximately 1/30 = 0.033 seconds, ~30 milliseconds. To simplify this program, we will assume that the main loop is always instantaneous.
 * This line is added at the end of the ***main loop*** to ensure that the program waits a bit after printing the current frame.
 
-Later, we will need a way to know how much time has passed since the start of the application to be able to perform operations that depend on time. For this reason, we will also use a variable to accumulate the time that has elapsed since the start. Consider the following code fragment:
+Later on, we will need a way to know how much time has passed since the start of the application in order to perform operations that depend on that. For this reason, we will also use a variable that stores the time that has elapsed since the start.
 
 ```cpp
 // Main loop
@@ -159,7 +157,7 @@ while (true)
 ```
 
 * `frame_start` is an object that represents a point in time. In particular, it represents the start of the frame that is currently being processed.
-* `time_passed` is the amount of time that has passed since the start of the program in **seconds**
+* `time_passed` is the amount of time that has elapsed since the start of the program in **seconds**
 * When the loop starts, we store the current time in `now`, and then we calculate the difference in time between `now` and the last time the loop started, `frame_start`. We add this difference to `time_passed`.
 * The line `chrono::duration_cast<chrono::milliseconds>(now - frame_start).count() / 1000.0f;` is simply counting the number of milliseconds between `now` and `frame_start`, and converting it to seconds.
 
@@ -180,16 +178,16 @@ while(true)
 }
 ```
 
-The additional whitespace that is printed after the character is not necessary, but I like it, it gives a cleaner finish to the resulting image. If you test the program as it is so far, you may see a matrix of meaningless characters. This is normal, and it is because, depending on where you declared the `canvas` matrix, its memory may be uninitialized. You can also add a function to clear the canvas before starting, but we will do this later when we update the canvas.
+The additional whitespace that is printed after the character is not necessary, but I like the cleaner finish it gives to the resulting image.. If you test the program as it is so far, you may see a matrix of meaningless characters. This is normal, and it is because, depending on where you declared the `canvas` matrix, its memory may be uninitialized. You can also add a function to clear the canvas before starting, but we will do this later when we update the canvas.
 
 Until now, you should have the following functionality implemented:
 
 1. We can print to the terminal by replacing the previous image instead of filling the terminal with many repetitions of the same image.
-2. There is a time interval between each frame: the iterations of the main loop are not executed immediately.
+2. There is a time interval between each frame: Iterations of the main loop are not executed immediately, following our target fps.
 3. We have a variable that records the time that has passed since the start of the program and is updated in each iteration.
 4. The content of the pixels is stored in a matrix of size $R$, the chosen resolution, and is printed from this matrix.
 
-Before proceeding, confirm that everything has gone well so far. Then, we will start working on the drawing of our donut.
+Before proceeding, confirm that everything has gone well so far. Then, we will start working on the drawing of our [donut](https://en.wikipedia.org/wiki/Torus).
 
 # Canvas update
 
@@ -197,7 +195,7 @@ To update the canvas, our first intuition might be to iterate pixel by pixel ove
 
 Taking advantage of the low resolution of the terminal, our solution will be a simplification of the computer graphics pipeline. The idea will be as follows:
 
-1. We will create all the **points of the donut**, as we would for a 3D model.
+1. We will create all the **points of the [donut](https://en.wikipedia.org/wiki/Torus)**, as we would for a 3D model.
 2. For each point, we will **transform it** so that the object is visible and has the appearance that we want in our canvas. This stage corresponds to the **Vertex Shader** in the computer graphics pipeline.
 3. After transforming it, we will **find the pixel** where this point falls, or rather its position in the canvas matrix. This step corresponds to **rasterization** but is simplified to adapt to the low resolution of the terminal.
 4. Then, using the direction of the light and the normal at that point, we will **choose the character** that we will assign to that position of the matrix, coloring this pixel. This step corresponds to **shading or Fragment Shader**.
@@ -368,7 +366,7 @@ The following image shows the relationship between the canvas and the torus geom
 
 ![Untitled](/assets/images/torus-cpp/Untitled%201.png)
 
-Note that the Y-axis is reflected downwards in our canvas, since the row indices increase downwards, while in the Cartesian plane, they increase upwards. In other words, the positive Y-axis points downwards, just like in Godot. For this reason, the image you will see at this point will be the torus arc in the first quadrant of the plane but reflected across the X-axis.
+Note that the Y-axis is reflected downwards in our canvas, since the row indices increase downwards, while in the Cartesian plane, they increase upwards. In other words, the positive Y-axis points downwards, just like in [Godot](https://godotengine.org/). For this reason, the image you will see at this point will be the torus arc in the first quadrant of the plane but reflected across the X-axis.
 
 ## Transforming vertices
 
@@ -433,7 +431,7 @@ With the following code, just after creating the torus vertices, we can center t
 
 ## Perspective Projection
 
-*Projection* is the process of transforming a 3D geometric representation into a 2D one. In our case, we want to transform 3D points into a 2D image. To get a projection we just need a function to transform 3D points into 2D points.
+*Projection* is the process of transforming a 3D geometric representation into a 2D one. In our case, we want to transform 3D points into a 2D image. To get a projection we just need a function that transforms 3D points into 2D points.
 
 Currently, we are using **orthographic projection.** That is, we convert points $(x,y,z)$ into points $(x', y')$ simply by discarding the Z coordinate:
 
@@ -441,7 +439,7 @@ $$
 Ortho(x,y,z) = (x,y)
 $$
 
-This transformation is simple and allows us to visualize 3D objects easily, as we have done so far. However, it does not consider depth, so objects that are far away look the same size as if they were closer. Intuitively, this is a consequence of ignoring the Z coordinate. Our projection function ignores the depth of vertices.
+This projection type is the one we have being using so far, is simple and allows us to visualize 3D objects easily. However, it does not consider depth, so objects that are far away look the same size as if they were closer. Intuitively, this is a consequence of ignoring the Z coordinate. Our projection function ignores the depth of vertices.
 
 ![Proyección ortográfica: Los puntos del cubo se transforman a puntos en el plano simplemente descartando su coordenada Z.](/assets/images/torus-cpp/Proyeccin_ortogrfica_(1).png)
 
@@ -758,3 +756,5 @@ With a little more work, it is possible to extend this simple scheme to create m
 The resulting code of this article can be found in the following Github repo: 
 
 [GitHub - LDiazN/torus.cpp: A simple torus render in terminal inspired by donut.c](https://github.com/LDiazN/torus.cpp)
+
+![A spinning torus on a terminal, using ASCII art](/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif)
