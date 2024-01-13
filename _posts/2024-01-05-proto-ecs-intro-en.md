@@ -4,7 +4,7 @@ layout: post
 author: Luis Diaz
 tags: [Rust, Game Engine, proto-ecs]
 miniature: /assets/images/proto-ecs/workflow.png
-description: In this post, I introduce the core concepts of our Rust Game Engine, proto-ecs. We will learn about the general central ideas that power its object model.
+description: In this post, I introduce the core concepts of our Rust Game Engine, proto-ecs. We will learn about the core ideas that power its object model.
 language: en
 repo: 
 es_version: false
@@ -14,16 +14,16 @@ In this article, I present the core concepts and motivations behind `proto-ecs`,
 
 # Object models
 
-An object model (and specifically the *runtime* object model) is the layer of the engine that manages entities in a game. Managing an entity requires a lot of services, but the most relevant for our purposes right now are:
+An object model (and specifically the *runtime* object model) is the layer of the engine that manages entities in a game and serves as an interface to internal engine systems. Managing an entity requires a lot of services, but the most relevant for our purposes right now are:
 
 * **Lifetime:** Definition, creation, destruction, initialization, updating...
-* **Hierarchy:** Relationships with other entities, and how that affects updates.
-* **Access to engine services:**  Assets, physics, rendering...
+* **Hierarchy:** Relationships with other entities, particularly spatial relationships, and how that affects updates.
+* **Access to engine services:**  Assets, physics, rendering, audio...
 
 There are many ways in which this can be implemented, each with its benefits and drawbacks. Let's look at some popular examples we have out there:
 
 * **Plain old OOP:** You would just create custom classes for each entity in a game, inheriting from a class hierarchy to reuse code and implementing the new behavior in a specialized class. This is the trivial way of implementing an object model and probably the basis for all other models.
-* **Entity-Component model:** In this model, you have an entity that manages initialization, update, and destruction logic, and components: objects that implement the actual behavior. This is an iteration over the plain old OOP model where you favor composition over inheritance. In this model, entities are turned into component collections. You can do this more or less data-oriented:
+* **Entity-Component model:** In this model, you have an entity that manages initialization, update, and destruction logic, and components. Components are objects that implement the actual behavior. This is an iteration over the plain old OOP model where you favor composition over inheritance. In this model, entities are turned into component collections. You can do this more or less data-driven:
     * In **Unreal** with C++, for example, you would create a specialization of an Actor class (the entity) where you would define *components as class members*. This actor class would define more properties, initialization, and overall wiring logic between components, while components implement the actual behavior. In this style, the behavior is implemented both in components and the entity.
     * On the other hand, in **Unity**, we would almost always inherit from `MonoBehavior` to implement a **component** and handle wiring logic between components in the component itself. Entities are **created on the editor** by attaching components to a **GameObject**, and entity types are created by spawning instances of **prefabs**. In this design, the behavior is implemented by components, and entities are a **collection** of components: their behavior is defined by the components they contain.
 * **Entity Component Systems:** In this model, things are way different than the previous ones. Components are **just data**, storage where the state is saved for the systems to iterate on. Actual behavior is implemented in systems, functions that don't store any local state and operate over each entity that matches a **signature**. The signature is a list of required components for that entity. Entities are usually not proper objects but an abstraction of an object represented as an ID, so an entity is an ID related to components, and those components are updated by systems. 
@@ -37,7 +37,7 @@ There are more object models and each of them can be implemented in many ways, b
 
 Every object model has its benefits and problems. The **plain OOP and entity-component** models are easier to understand since they are similar to how we usually think about the world, but they *inherit* all the problems we already know from OOP (the death diamond, hard-to-understand hierarchies, careful state manipulation in specialized classes, and so on). **ECS** is highly efficient but hard to reason and not all gameplay code benefits in the same way from its strict design. 
 
-We can talk at length about problems and solutions in object models the core problem we will be focusing on right now is the **reference hell**.
+We can talk at length about problems and solutions in object models but the core problem we will be focusing on is the **reference hell**.
 
 Commonly, a component of our game might need to interact with other components. They can have dependencies, even mutual dependencies, they can manipulate the same data, have execution order dependencies, and be referenced by any other *thing* in our game. All of this makes it hard to parallelize gameplay code since there's no easy way to know when two processes depend on the same data. This is especially true for gameplay code where we handle interactions between many entities and even between components of the same entity. This is the **reference hell** problem because usually to do this you require a lot of references to components and entities stored everywhere. 
 
@@ -52,7 +52,7 @@ This difference in the way a component defines its dependencies is the origin of
 
 The following design is heavily inspired by [this video from Bobby Angelov](https://www.youtube.com/watch?v=jjEsB611kxs). The core idea is to reach a middle point between the object component model and the ECS model. Our main goals are:
 
-1. **No implicit dependencies:** Since most of the problem comes from implicit dependency operations, the whole point of this system is to get rid of them, and use **explicit dependencies**** instead. Entities can have their update logic, but they can't operate directly over other entities.
+1. **No implicit dependencies:** Since most of the problem comes from implicit dependency operations, the whole point of this system is to get rid of them, and use **explicit dependencies** instead. Entities can have their update logic, but they can't operate directly over other entities.
 2. **Trivial parallelization:** There should be minimal user input to achieve parallelization whenever possible. There should be no need for locks and complex synchronization mechanisms in gameplay code, only in engine code.
 
 ## Components
@@ -60,8 +60,8 @@ The following design is heavily inspired by [this video from Bobby Angelov](http
 Our engine has the following components:
 
 * **Datagroups:** As their name implies, they are data storage. They can implement logic to encourage encapsulation, just **not update logic**. Datagroups would be considered components in a standard ECS. **Datagroups can't store references to other datagroups, entities, or global systems**
-* **Local Systems:** Functions that operate over **a single entity**. They can specify which datagroups expect from the entities they operate on, and implement **update logic**. They are functions because they are **stateless**, their state is represented as the current values of datagroups in the entities they operate in. **Local Systems don't operate in more than one entity at a time.** Unlike traditional ECSs, local systems are **opt-in** and entities should specify which local systems they want to execute. A local system can have as many functions as stages, more on that later.
-* **Global Systems:** These are **singleton objects**** that move data between entities, and implement inter-entity update logic. They specify which datagroups the entities should provide, they can have **internal state** and are **opt-in**: entities specify if they want to be part of some global system.
+* **Local Systems:** Functions that operate over **a single entity**. They can specify which datagroups to expect from the entities they operate on, and implement **update logic**. They are functions because they are **stateless**, their state is represented as the current values of datagroups in the entities they operate in. **Local Systems don't operate in more than one entity at a time.** Unlike traditional ECSs, local systems are **opt-in** and entities should specify which local systems they want to execute. A local system can have as many functions as stages, more on that later.
+* **Global Systems:** These are **singleton objects** that move data between entities, and implement inter-entity update logic. They specify which datagroups the entities should provide, they can have **internal state** and are **opt-in**: entities specify if they want to be part of some global system.
 * **Stages:** A stage represents a **segment of a frame step**. It runs all the **update functions** and **book-keeping operations** that might be needed after they are called. There are many stages so that update functions have plenty of room to specify execution order concerning other systems. Each stage calls the update function for that stage in all entities and global systems in the right order. 
 * **Entities:** Unlike traditional ECSs, entities are actual objects instead of IDs, they **store** the entity state represented as a list of datagroups and keep track of which local systems are required for that entity. Entities are created in a **data-driven** manner, they are not objects where the datagroups are a class member, an entity is defined by a collection of datagroups and systems.
 
