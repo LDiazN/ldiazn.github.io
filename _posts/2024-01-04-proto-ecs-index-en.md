@@ -23,7 +23,7 @@ A few months ago a good friend of mine, [Christian Oliveros](https://github.com/
 src="https://www.youtube.com/embed/jjEsB611kxs">
 </iframe> 
 
-In this video Bobby starts with a simple crash course about game engine models, their characteristics, and problems, emphasizing the problem of debugging and parallelizing gameplay code for a traditional engine. 
+In this video Bobby starts with a simple crash course about game engine object models, their characteristics, and issues, emphasizing the problem of debugging and parallelizing gameplay code for a traditional engine. 
 
 He then proceeds with the most interesting part for us, the architecture for an object model where he attacks most of these problems. It's interesting because the result is a design where parallelism is trivial and errors are harder to occur in the first place. 
 
