@@ -1,12 +1,14 @@
 entries: 
-  - title: Recursive Ray Tracer
-    url: https://github.com/LDiazN/recursive-ray-tracer
-    desc: Simple example of recursive ray tracer to render scenes offline, written in C++.
-    img: https://github.com/LDiazN/recursive-ray-tracer/blob/main/img/sample_scene_rtv1.png?raw=true
-    date: Sept. 2022
+
+  - title: PPHD8 Extract
+    url: https://github.com/LDiazN/pphd8extract
+    desc: A tool written in rust to extract .VAG audio files from PPHD8 files, an audio file format for old Play Station consoles
+    img: https://raw.githubusercontent.com/LDiazN/pphd8extract/main/img/pphd8extract_squared.jpg
+    date: Jan. 2023
     tags:
-      - C++
-      - Computer Graphics
+      - Rust
+      - Systems Programming
+      - Tools
 
   - title: AR Carnival
     url: https://github.com/LDiazN/ARCarnival
@@ -28,6 +30,15 @@ entries:
       - Unreal 4
       - C++
       - Blueprints
+
+  - title: Recursive Ray Tracer
+    url: https://github.com/LDiazN/recursive-ray-tracer
+    desc: Simple example of recursive ray tracer to render scenes offline, written in C++.
+    img: https://github.com/LDiazN/recursive-ray-tracer/blob/main/img/sample_scene_rtv1.png?raw=true
+    date: Sept. 2022
+    tags:
+      - C++
+      - Computer Graphics
 
   - title: TAC Interpreter
     url: https://github.com/LDiazN/tac-interpreter
