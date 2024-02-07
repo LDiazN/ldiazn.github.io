@@ -36,6 +36,8 @@ struct MyComponent {
 fn create_my_component() -> MyComponent {
     MyComponent{name: "default name".to_string()}
 }
+
+// Register some metadata related to this component
 register_component!(
     MyComponent,
     factory = create_my_component
@@ -43,7 +45,7 @@ register_component!(
 
 // main.rs
 fn main() {
-    // Automagically get data to all registered data types, 
+    // Automagically get metadata for all registered data types, 
     for comp_data in get_all_components() {
         // Call the create_my_component function that was previously registered
         let component = (comp_data.factory)();
@@ -75,3 +77,38 @@ We could try to use [`lazy_static!`](https://docs.rs/lazy_static/latest/lazy_sta
 So, if we can't do nothing from our main function, _is there something before main?_
 
 # Life before main
+
+In other languages sometimes you need to run some code before everything else in the appliation. This code runs even before the first line of code in the `main` function, take [static initializers](https://en.cppreference.com/w/cpp/language/initialization) in C++ for example; This is what we call **life before main**. In Rust, [we don't have life before main](https://doc.rust-lang.org/1.4.0/complement-design-faq.html#there-is-no-life-before-or-after-main-(no-static-ctors/dtors)), and there are [very good reasons](http://yosefk.com/c++fqa/ctors.html#fqa-10.12) to avoid them, and some of the use cases of life-before-main are handled pretty well by [lazy-static initialization](https://crates.io/crates/lazy_static), which is implemented by creating a variable that gets initialized at some point after main when the static variables are accessed for the first time. However the plugin-registration style of static initialization we try to implement still requires actual life-before-main.
+
+This could be easier if Rust supported some sintax or feature to hook init funtions to some explicitly specified point in main, and there's an interesting discussion around this topic in this post titled [From “life before main” to “common life in main”](https://internals.rust-lang.org/t/from-life-before-main-to-common-life-in-main/16006). For now, we will stick to a non-portable life-before-main solution: [ctor](https://crates.io/crates/ctor).
+
+# Running code before main
+
+**ctor** is a crate that implements a macro that you can add to any function to force it to run before main:
+
+```rust
+// From ctor documentation:
+static INITED: AtomicBool = AtomicBool::new(false);
+
+#[ctor]
+fn foo() {
+    INITED.store(true, Ordering::SeqCst);
+}
+
+fn main() {
+    assert!(INITED.load(Ordering::SeqCst));
+}
+```
+
+* In this code, we create a static variable `INITED` initialized to `false`.
+* We also create a function `foo` that sets `INITED` to `true`
+* Since `foo` is marked with `#[ctor]`, it will be called before anything we do in the main function.
+
+The main idea here is to use `#[ctor]` along with a macro to push some data into some container whenever we want to register a new datatype. 
+
+Before we continue, also consider the following crates:
+
+* **[inventory](https://crates.io/crates/inventory)** : This crate implements a more general purpose version of what we're about to do with `ctor`, it allows you to register data instances with a macro. This crate works for most cases, so it's very likely it fits your needs. 
+* **[linkme](example-registration)** : This crate allows you to have static slices of elements that are gathered into a contiguous section in the binary. Basically allows you to have a pre-filled array of static items.
+
+We didn't use those crates for `proto-ecs` because we needed a lot of macro code to register metadata and implement wiring boilerplate anyways, so ctor was a better fit for our use case. 
