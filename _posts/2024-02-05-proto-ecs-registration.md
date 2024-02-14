@@ -1,5 +1,5 @@
 ---
-title: "[proto-ecs] Registering data types" 
+title: "[proto-ecs] Data types registration" 
 layout: post
 author: Luis Diaz
 tags: [Rust, Game Engine, proto-ecs]
@@ -106,9 +106,101 @@ fn main() {
 
 The main idea here is to use `#[ctor]` along with a macro to push some data into some container whenever we want to register a new datatype. 
 
+## A quick look at some alternatives
 Before we continue, also consider the following crates:
 
 * **[inventory](https://crates.io/crates/inventory)** : This crate implements a more general purpose version of what we're about to do with `ctor`, it allows you to register data instances with a macro. This crate works for most cases, so it's very likely it fits your needs. 
 * **[linkme](example-registration)** : This crate allows you to have static slices of elements that are gathered into a contiguous section in the binary. Basically allows you to have a pre-filled array of static items.
 
 We didn't use those crates for `proto-ecs` because we needed a lot of macro code to register metadata and implement wiring boilerplate anyways, so ctor was a better fit for our use case. 
+
+## Back to ctor
+
+Now, for the next example we will implement a simple component registration macro similar to the one we 
+use in `proto-ecs`. The idea is that:
+
+1. We define a **component** as a struct
+2. The component provides a **factory function** that knows how to create a component
+3. Using **a macro**, we **register** the component by:
+    1. Creating an entry in the component registry for this struct. A component registry is just a container of metadata about containers
+    2. Creating a wrapper function over the factory function that the component management system knows how to call
+
+```rust
+use crc32fast::hash;
+use ctor::ctor;
+use lazy_static::lazy_static;
+use std::any::Any;
+use std::sync::Mutex;
+
+lazy_static! {
+    static ref COMPONENT_REGISTERS: Mutex<Vec<RegisterEntry>> = Mutex::new(vec![]);
+}
+
+#[derive(Debug)]
+struct RegisterEntry {
+    name: String,
+    name_crc: u32,
+    factory: fn() -> Box<dyn Any>,
+}
+
+macro_rules! register_component {
+    ($component:ident, $function:ident) => {
+        #[ctor]
+        fn add_to_register() {
+            fn factory_any() -> Box<dyn Any> {
+                let component = $function();
+                Box::new(component)
+            }
+            COMPONENT_REGISTERS.lock().unwrap().push(RegisterEntry {
+                name: stringify!($component).to_string(),
+                name_crc: hash(stringify!($component).as_bytes()),
+                factory: factory_any,
+            });
+        }
+    };
+}
+
+struct MyComponent {
+    name: String,
+}
+
+fn create_component() -> MyComponent {
+    MyComponent {
+        name: "Default Name".to_string(),
+    }
+}
+
+register_component! {
+    MyComponent,
+    create_component
+}
+
+fn main() {
+    let registry = COMPONENT_REGISTERS.lock().unwrap();
+    for entry in registry.iter() {
+        let any_value = (entry.factory)();
+        let component = any_value.downcast_ref::<MyComponent>().unwrap();
+
+        // name: MyComponent, name_crc: 1359051788
+        println!("name: {}, name_crc: {}", entry.name, entry.name_crc);
+        // Component name: Default Name
+        println!("Component name: {}", component.name);
+    }
+}
+```
+
+Let's go step by step with this code:
+
+1. We first create a registry (vector of entries) of components. Each entry defined by some metadata about the component, in this case the name, a crc of the name that you could use for persistent storage, and the factory function. The registry is static so that it can be reached from any point. 
+2. We define a macro that, given a struct identifier and a function identifier, writes a new function marked with `ctor`. This function will be ran automatically before main. In this function we:
+    1. Define the wraper for the factory function
+    2. Push a new entry for the component registration system, using the metadata we can compute from the macro.
+3. Define a component by creating a struct type with some data
+4. Define the factory function for that struct. Note that the factory function returns an instance of the struct.
+5. We use the macro we defined earlier to register the component
+6. Finally, in the main function we check that our component is actually registered without doing anything!
+
+> Note that since the macro is defining a new function right were it's called, multiple macro invocations can generate errors with multiple errors. It can also become anoying because we're generating functions that the user can call but he shouldn't. To fix this problem, you can use the following cool scoping trick: When writing the macro, you write the generated function like this: `const _ : () = {/*your generated function goes here*/};`. This way, the function exists but is not reachable outside the `= {...};` block. `ctor` will have no problem to find the function, and your users won't complain about all that garbage in their code suggestions.
+
+This is the minimal setup you need to build a registration system, and works for simple cases just like this. However, things get a bit harder when we try to introduce dependencies between registered items. 
+
