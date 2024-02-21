@@ -37,3 +37,4 @@ I will update this section from time to time whenever I write a new article abou
 
 
 * [*2024-01-05*] [Introduction]({% post_url 2024-01-05-proto-ecs-intro-en %})
+* [*2024-02-05*] [Data types registration in Rust]({% post_url 2024-02-05-proto-ecs-registration-en %})
