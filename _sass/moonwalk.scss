@@ -42,11 +42,14 @@ li { margin: 0.4em 0; }
   padding: 4em 2em;
 }
 
-table, th, td {
+table {
   width: 100%;
-  border: thin solid var(--bg);
   border-collapse: collapse;
-  padding: 0.4em;
+  border-radius: 3px;
+  th, td {
+    border: thin solid var(--share-text);
+    padding: 0.4em;
+  }
 }
 
 .invisible-table 
