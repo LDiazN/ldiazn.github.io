@@ -751,9 +751,27 @@ Neither `InPlaceAllocator` nor `BoxAllocator` are safe, which doesn't mean they
 
     - This doesn't matter with the `InPlaceAllocator` because you need a reference to the allocator, although you might run similar problems if you have several allocators and you need to be careful with your handle usage
 
-- You will **manually ensure** consistent access to stored entities
-
 - You have to choose a **bad access policy when accessing dead entities**. Do you consider this an unrecoverable error and panic the program? do you consider it a user error and report it with a `Result` type?
+
+- You can have several mutating references to the same entity, so **the system will manage reference creation and access**. This is specially important if your system provides multithreaded access to entities. 
+
+- When using paralelism, a possible **race condition** can happen when  someone calls `is_live` (possibly implicitly with pointer dereference) when other thread is `free`ing the entity. So, in this case you either **wrap the allocator entry type in a mutex-like object**, or **design your system so that this doesn't happen**
+
+## Usage on proto-ecs
+
+To provide an example of how this allocator can be used safely, let's talk about how we do it in [proto-ecs]({% post_url 2024-01-05-proto-ecs-intro-en %}). 
+
+The first thing to note is that the entity allocator is well within the depths of the engine, the **user will never have direct access to the entity allocator**. This is important because it allows the engine to have full control of the allocation, destruction, and access of entities. 
+
+So, let's walk step by step to see how we make this implementation safe:
+
+- **The allocator will live longer than allocated objects** : This one is easy, we create the allocator on engine start-up, and destroy it on engine shut down. Since users have no access to the allocator, there's no way to shut it down before that.
+
+- **Bad Access Policy** : In proto-ecs, we choose to consider accessing a dead entity **a programming error**, and therefore will crash the engine.
+
+- **Reference creation and access** : In proto-ecs, local systems will only have access to their owner entity data groups, so they can't access entity references at all. Global systems provide access to the affected entities as an argument, ensuring that no other thread will access the same entities at the same time, so it's hard to create several mutating references to the same entities. 
+
+- **live-on-free race condition** : We don't allow directly creating/destroying entities with `free` or `new`, we provide functions that will schedule the creation or destruction of an entity for the next frame. This way, we can safely call `free` and `new` when we know there are no `is_live` or `get` calls. It's also worth noting that we have to do this anyway because creating an entity implies much more than just allocating it, several bookkeeping operations have to run, and we do it between frames to keep execution flow consistent. 
 
 ## Profiling 
 
@@ -787,6 +805,8 @@ Here are our results:
 As expected, allocation time is higher with the `InPlaceAllocator` due to resizes of the underlying vector being more expensive because entities are harder to copy than pointers. Access time is also lower with the `BoxAllocator`, which makes sense considering that it's just a pointer dereference. 
 
 We ended up choosing the `BoxAllocator` since it's the most flexible, performant, and ergonomic to use. The drawback is the worst cache efficiency, but this is something that can be solved with a more thoughtful implementation. Safe access to entities is also not a problem, since our system ensures that users can't access entities directly at once. See [this summary of proto-ecs]({% post_url 2024-01-05-proto-ecs-intro-en %})
+
+# 
 
 # Final Thoughts 
 
