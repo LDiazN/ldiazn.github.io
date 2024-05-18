@@ -313,7 +313,7 @@ entity2.borrow_mut()._is_active = true;
 
 You might have noticed that we are using a **vector** to store our entities, and this is good for performance because the data locality might keep cache misses in check. However, there is a case where our current implementation is inefficient, and that's when you **allocate too many entities**, especially if you don't know how many you might need. If you have to allocate many entities at once, you might have to **request several resize operations** for the vector (implicitly with each `push`). Since the actual data is located within the array, each array entry might be big and expensive to copy into a new memory segment. 
 
-> Another problem that's not so common in Rust but is worth being aware of, is the fact that each resize might **invalidate pointers to positions within the array**. Using raw pointers is not common in Rust but if you are writing a game engine, that's probably not the most crazy thing you are doing. 
+> Another problem that's not so common in Rust but is worth being aware of, is the fact that each resize might **invalidate pointers to positions within the array**. Using raw pointers is not common in Rust but if you are writing a game engine, that's probably not the craziest thing you are doing. 
 
 If you want cheaper resize operations to handle these cases, you can change the `Option<RefCell<T>>` in the array entry to `Box<Option<RefCell<T>>`. This will allocate objects in the heap and store the pointer, and the `RefCell` will allow you to use the same trick to have many mutable references to positions within the same allocator array.
 
