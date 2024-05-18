@@ -753,9 +753,9 @@ Neither `InPlaceAllocator` nor `BoxAllocator` are safe, which doesn't mean they
 
 - You have to choose a **bad access policy when accessing dead entities**. Do you consider this an unrecoverable error and panic the program? do you consider it a user error and report it with a `Result` type?
 
-- You can have several mutating references to the same entity, so **the system will manage reference creation and access**. This is specially important if your system provides multithreaded access to entities. 
+- You can have several mutating references to the same entity, so **the system will manage reference creation and access**. This is especially important if your system provides multithreaded access to entities. 
 
-- When using paralelism, a possible **race condition** can happen when  someone calls `is_live` (possibly implicitly with pointer dereference) when other thread is `free`ing the entity. So, in this case you either **wrap the allocator entry type in a mutex-like object**, or **design your system so that this doesn't happen**
+- When using parallelism, a possible **race condition** can happen when someone calls `is_live` (possibly implicitly with pointer dereference) when another thread is `free`ing the entity. So, in this case, you either **wrap the allocator entry type in a mutex-like object**, or **design your system so that this doesn't happen**
 
 ## Usage on proto-ecs
 
