@@ -9,9 +9,11 @@
   {{ partial "project_card_table.html" (dict "item" . "external" true) }}
 {{ end }}
 
-{{ range .Site.Data.projects.entries }}
-  {{ partial "project_card_table.html" (dict "item" . "external" (hasPrefix .url "http")) }}
-{{ end }}
+<div class="card-grid">
+  {{ range .Site.Data.projects.entries }}
+    {{ partial "project_card_table.html" (dict "item" . "external" (hasPrefix .url "http")) }}
+  {{ end }}
+</div>
 
 {{ partial "footer.html" . }}
 {{ end }}

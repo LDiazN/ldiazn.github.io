@@ -271,6 +271,26 @@ ul.nav-list li {
   display: inline;
 }
 
+/* Project card grid: two cards per row after the first */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: calc(var(--line-height) * 2);
+  margin-bottom: calc(var(--line-height) * 2);
+}
+@media (max-width: 560px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.card-grid .card-table {
+  font-size: 0.875rem;
+  margin-bottom: 0;
+}
+.card-grid .card-table h3 {
+  font-size: 1rem;
+}
+
 /* Project card table */
 .card-table {
   margin-bottom: calc(var(--line-height) * 2);
@@ -297,4 +317,7 @@ ul.nav-list li {
 .card-table-title a {
   font-weight: var(--font-weight-bold);
   text-decoration-thickness: var(--border-thickness);
+}
+.card-table-date-value {
+  color: var(--text-color-alt);
 }
