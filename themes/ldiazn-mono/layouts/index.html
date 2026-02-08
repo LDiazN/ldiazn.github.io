@@ -1,7 +1,8 @@
 {{ define "title" }}{{ .Site.Title }}{{ end }}
 
 {{ define "main" }}
-{{ partial "header_table.html" (dict "ctx" . "Title" .Site.Title "ShowSubtitle" true) }}
+{{ partial "header_table.html" (dict "ctx" .) }}
+{{ partial "page_title.html" (dict "Title" "Home") }}
 
 {{ if eq .Site.Params.show_description true }}
   <p>{{ .Site.Params.description | safeHTML }}</p>

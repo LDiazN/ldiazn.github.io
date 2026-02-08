@@ -1,19 +1,22 @@
-{{ define "title" }}Projects | {{ .Site.Title }}{{ end }}
+{{ define "title" }}{{ .Title }} | {{ .Site.Title }}{{ end }}
 
 {{ define "main" }}
-{{ partial "header_table.html" (dict "ctx" . "Title" "Projects") }}
+{{ partial "header_table.html" (dict "ctx" .) }}
+{{ partial "page_title.html" (dict "Title" .Title) }}
 
 {{ .Content }}
 
 {{ with .Site.Data.projects.highlight }}
   {{ partial "project_card_table.html" (dict "item" . "external" true) }}
 {{ end }}
-
-<div class="card-grid">
-  {{ range .Site.Data.projects.entries }}
-    {{ partial "project_card_table.html" (dict "item" . "external" (hasPrefix .url "http")) }}
-  {{ end }}
-</div>
+{{ $projects := .Site.Data.projects.entries }}
+{{ if $projects }}
+  <div class="card-grid">
+    {{ range $projects }}
+      {{ partial "project_card_table.html" (dict "item" . "external" (hasPrefix .url "http")) }}
+    {{ end }}
+  </div>
+{{ end }}
 
 {{ partial "footer.html" . }}
 {{ end }}

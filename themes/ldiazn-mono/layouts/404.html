@@ -1,16 +1,10 @@
-<!DOCTYPE html>
-<html lang="{{ .Site.Language.Lang | default "en" }}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>404 | {{ .Site.Title }}</title>
-  <link rel="stylesheet" href="{{ "/css/reset.css" | absURL }}">
-  <link rel="stylesheet" href="{{ "/css/index.css" | absURL }}">
-</head>
-<body>
-  {{ partial "header_table.html" (dict "ctx" . "Title" "404") }}
-  <p><strong>Page not found</strong></p>
-  <p>The requested page could not be found.</p>
-  <p><a href="{{ "" | absURL }}">Home</a></p>
-</body>
-</html>
+{{ define "title" }}404 | {{ .Site.Title }}{{ end }}
+
+{{ define "main" }}
+{{ partial "header_table.html" (dict "ctx" .) }}
+{{ partial "page_title.html" (dict "Title" "404") }}
+
+<p><strong>Page not found</strong></p>
+<p>The requested page could not be found.</p>
+<p><a href="{{ "" | absURL }}">Home</a></p>
+{{ end }}

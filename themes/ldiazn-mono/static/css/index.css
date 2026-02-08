@@ -222,6 +222,13 @@ th {
   vertical-align: top;
 }
 
+/* Page title – first content below the header, on every page */
+.page-title {
+  margin: var(--line-height) 0 var(--line-height);
+  font-size: 1.25rem;
+  text-transform: uppercase;
+}
+
 .width-min {
   width: 0%;
   white-space: nowrap;

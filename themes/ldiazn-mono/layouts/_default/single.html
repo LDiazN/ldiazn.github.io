@@ -1,8 +1,10 @@
 {{ define "title" }}{{ .Title }} | {{ .Site.Title }}{{ end }}
 
 {{ define "main" }}
-{{ partial "header_table.html" (dict "ctx" . "Title" .Title) }}
+{{ partial "header_table.html" (dict "ctx" .) }}
+{{ partial "page_title.html" (dict "Title" .Title) }}
 
 {{ .Content }}
+
 {{ partial "footer.html" . }}
 {{ end }}
