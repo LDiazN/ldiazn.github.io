@@ -248,27 +248,27 @@ The next step is to **generate torus points.** Normally, we would load a model f
 $$
 P(\theta, \phi) = 
 \begin{cases}
-(r_a + r_bcos(\theta)) cos(\phi)\\
-(r_a + r_bcos(\theta)) sin(\phi)\\
--r_b\ cos(\theta)
-\end{cases} \\ \\
-0\le \theta \le 2 \pi \\
-0\le \phi \le 2 \pi \\
+(r_a + r_b\cos(\theta)) \cos(\phi)\\
+(r_a + r_b\cos(\theta)) \sin(\phi)\\
+-r_b\cos(\theta)
+\end{cases}
+\quad
+0\le \theta \le 2\pi,\quad 0\le \phi \le 2\pi
 $$
 
 Where:
 
-- \$\color{red}{r_a}\$ is the radius of the circumference of the torus
-- \$\color{blue}{r_b}\$ is the radius of the “tube”, the circle that is rotated to obtain the torus, which is a solid of revolution.
-- \$\color{blue}\theta, \color{red}\phi\$ are angles used to parameterize the torus shape. The angle \$ \color{blue} \theta\$ indicates where we are on the outer circle, while the angle \$ \color{red} \phi\$ indicates the position on the inner circle.
+- \\( \color{red}{r_a} \\) is the radius of the circumference of the torus
+- \\( \color{blue}{r_b} \\) is the radius of the “tube”, the circle that is rotated to obtain the torus, which is a solid of revolution.
+- \\( \color{blue}\theta, \color{red}\phi \\) are angles used to parameterize the torus shape. The angle \\( \color{blue}\theta \\) indicates where we are on the outer circle, while the angle \\( \color{red}\phi \\) indicates the position on the inner circle.
 
 ![Los parámetros **Ra, Rb**,  corresponden a los radios del círculo y el tubo respectivamente, los ejes son **X**, **Y**, **Z**](/assets/images/torus-cpp/image_2023-06-06_201607213.png)
 
-The parameters $\color{red}{R_a}$, $\color{blue}{R_b}$ correspond to the radii of the circle and the tube, respectively. The axes are $\color{red}X$, $\color{green}Y$, $\color{blue}Z$.
+The parameters \\( \color{red}{R_a} \\), \\( \color{blue}{R_b} \\) correspond to the radii of the circle and the tube, respectively. The axes are \\( \color{red}X \\), \\( \color{green}Y \\), \\( \color{blue}Z \\).
 
 ![El ángulo **θ** corresponde al ángulo en la circunferencia del tubo, y el ángulo **Φ** corresponde al ángulo en la circunferencia interna.](/assets/images/torus-cpp/image_2023-06-07_201159283.png)
 
-The angle $\color{blue}{\theta}$ corresponds to the angle on the circumference of the tube, and the angle $\color{red}{\phi}$ corresponds to the angle on the inner circumference.
+The angle \\( \color{blue}{\theta} \\) corresponds to the angle on the circumference of the tube, and the angle \\( \color{red}{\phi} \\) corresponds to the angle on the inner circumference.
 
 To represent this parametric equation for a torus, we will use the following function:
 
@@ -552,7 +552,7 @@ To define the brightness of each point, we will use a very simple rule. We will 
 
 ![Shading.png](/assets/images/torus-cpp/Shading.png)
 
-To achieve this we will use the **dot product** between the direction of light and the surface's normal vector. As we know, the dot product is a function that takes two vectors and calculates a scalar value. When the vectors are **normalized,** then the scalar is in the range \$[-1,1]\$, where -1 indicates that they are antiparallel (they are the same vector with opposite directions) and 1 indicates that they are parallel (they are the same vector, including the direction), and 0 indicates that they are perpendicular.
+To achieve this we will use the **dot product** between the direction of light and the surface's normal vector. As we know, the dot product is a function that takes two vectors and calculates a scalar value. When the vectors are **normalized,** then the scalar is in the range \\( [-1,1] \\), where -1 indicates that they are antiparallel (they are the same vector with opposite directions) and 1 indicates that they are parallel (they are the same vector, including the direction), and 0 indicates that they are perpendicular.
 
 ![Ejemplos de producto punto. a y b son perpendiculares, así que su producto punto es 0. a y c son antiparalelos, así que su producto punto es -1, y c es paralelo a sí mismo, por lo que el producto consigo mismo es 1. Además, todos los vectores entre c y b multiplicados con a producen valores negativos, y todos los vectores entre c y b multiplicados con c producen valores positivos.](/assets/images/torus-cpp/ProductoInterno.png)
 

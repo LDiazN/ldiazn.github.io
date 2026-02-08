@@ -240,21 +240,21 @@ El siguiente paso consiste en **generar los puntos del torus**. Normalmente carg
 $$
 P(\theta, \phi) = 
 \begin{cases}
-(r_a + r_bcos(\theta)) cos(\phi)\\
-(r_a + r_bcos(\theta)) sin(\phi)\\
--r_b\ cos(\theta)
-\end{cases} \\ \\
-0\le \theta \le 2 \pi \\
-0\le \phi \le 2 \pi \\
+(r_a + r_b\cos(\theta)) \cos(\phi)\\
+(r_a + r_b\cos(\theta)) \sin(\phi)\\
+-r_b\cos(\theta)
+\end{cases}
+\quad
+0\le \theta \le 2\pi,\quad 0\le \phi \le 2\pi
 $$
 
  
 
 Donde:
 
-- \$\color{red}{r_a}\$ es el radio de la circunferencia del torus
-- \$\color{blue}{r_b}\$ es el radio del “tubo”, el círculo que se rota para conseguir el torus, que es un sólido en revolución.
-- \$\color{blue}\theta, \color{red}\phi\$  son ángulos que se usan para parametrizar la figura del torus. El ángulo \$ \color{blue} \theta\$ indica en qué parte de la circunferencia externa estamos, mientras que el ángulo \$ \color{red} \phi\$ indica la posición en la circunferencia interna.
+- \\( \color{red}{r_a} \\) es el radio de la circunferencia del torus
+- \\( \color{blue}{r_b} \\) es el radio del “tubo”, el círculo que se rota para conseguir el torus, que es un sólido en revolución.
+- \\( \color{blue}\theta, \color{red}\phi \\)  son ángulos que se usan para parametrizar la figura del torus. El ángulo \\( \color{blue}\theta \\) indica en qué parte de la circunferencia externa estamos, mientras que el ángulo \\( \color{red}\phi \\) indica la posición en la circunferencia interna.
 
 ![Los parámetros **Ra, Rb**,  corresponden a los radios del círculo y el tubo respectivamente, los ejes son **X**, **Y**, **Z**](/assets/images/torus-cpp/image_2023-06-06_201607213.png)
 
