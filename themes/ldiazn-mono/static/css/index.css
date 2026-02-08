@@ -304,6 +304,17 @@ figcaption {
   color: var(--text-color-alt);
 }
 
+blockquote {
+  margin: var(--line-height) 0;
+  padding: var(--line-height) 0 var(--line-height) calc(var(--line-height) * 1.5);
+  border-left: 4px solid var(--neon-green-dim);
+  background: var(--background-color-alt);
+  color: var(--text-color-alt);
+  font-style: italic;
+}
+blockquote p:first-child { margin-top: 0; }
+blockquote p:last-child { margin-bottom: 0; }
+
 mark {
   background: rgba(251, 146, 60, 0.2);
   color: var(--neon-orange);
