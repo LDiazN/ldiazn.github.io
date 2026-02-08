@@ -3,6 +3,10 @@ title = "Luis Diaz"
 author = "Luis Diaz"
 theme = "ldiazn-mono"
 
+# Use date from filename (e.g. 2024-02-05-foo.md) when front matter has no date
+[frontmatter]
+  date = [":filename", ":default"]
+
 [params]
   subtitle = "Software engineer"
   description = "Hi! My name is Luis Diaz, I'm a Computer Engineer and I'm passionate about science, technology, video games, visual arts and software engineering. I work professionally as a software developer and I'm also interested in Game Technology, Computer Graphics, and 3D animation. Sometimes I also enjoy writing about things I do and find interesting. Visit my blog to learn more about my interests and explore my projects to see what I enjoy working on!"

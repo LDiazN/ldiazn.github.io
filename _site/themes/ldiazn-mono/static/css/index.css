@@ -17,6 +17,10 @@
   --font-weight-normal: 500;
   --font-weight-medium: 600;
   --font-weight-bold: 800;
+  /* Blog list: padding around the title row of each entry */
+  --blog-list-title-padding: 0.75rem;
+  /* Blog list: padding inside the date row (top and bottom) for all entries */
+  --blog-list-date-row-padding: calc(0.25rem);
 
   font-family: var(--font-family);
   font-optical-sizing: auto;
@@ -331,17 +335,11 @@ ul.nav-list li {
   vertical-align: top;
   border: var(--border-thickness) solid var(--text-color);
 }
-.blog-list-table tr.blog-entry-row-first td {
-  padding-top: calc(var(--line-height) * 2);
-}
-.blog-list-table tr.blog-entry-row-first:first-child td {
-  padding-top: 0;
-}
+/* Spacing between entries: only bottom padding on each entry’s last row */
+/* Date row: padding controlled by --blog-list-date-row-padding */
 .blog-list-table tr.blog-entry-row-last td {
-  padding-bottom: calc(var(--line-height) * 2);
-}
-.blog-list-table tr.blog-entry-row-last:last-child td {
-  padding-bottom: 0;
+  padding-top: var(--blog-list-date-row-padding);
+  padding-bottom: var(--blog-list-date-row-padding);
 }
 /* Image cell: white background, content centered vertically; override .blog-list-table td */
 .blog-list-table td.blog-entry-img {
@@ -365,7 +363,8 @@ ul.nav-list li {
   text-decoration: none;
 }
 .blog-entry-title {
-  text-align: center;
+  text-align: left;
+  padding: var(--blog-list-title-padding);
 }
 .blog-entry-title h3 {
   margin: 0;

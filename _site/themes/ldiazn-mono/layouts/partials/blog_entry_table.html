@@ -22,5 +22,10 @@
 </tr>
 <tr class="blog-entry-row-last">
   <td class="width-min">date</td>
-  <td class="width-auto blog-entry-date-value">{{ $page.Date.Format ($page.Site.Params.date_format | default "2006-01-02") }}</td>
+  <td class="width-auto blog-entry-date-value">
+    {{ $format := $page.Site.Params.date_format | default "2006-01-02" }}
+    {{ $d := $page.PublishDate }}{{ if $d.IsZero }}{{ $d = $page.Date }}{{ end }}
+    {{ if $d.IsZero }}{{ with $page.File }}{{ $d = time (substr .ContentBaseName 0 10) }}{{ end }}{{ end }}
+    {{ $d.Format $format }}
+  </td>
 </tr>
