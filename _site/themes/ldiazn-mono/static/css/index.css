@@ -340,6 +340,7 @@ ul.nav-list li {
 .blog-list-table tr.blog-entry-row-last td {
   padding-top: var(--blog-list-date-row-padding);
   padding-bottom: var(--blog-list-date-row-padding);
+  border-bottom-width: calc(var(--border-thickness) * 2);
 }
 /* Image cell: white background, content centered vertically; override .blog-list-table td */
 .blog-list-table td.blog-entry-img {
@@ -379,5 +380,8 @@ ul.nav-list li {
   vertical-align: top;
 }
 .blog-entry-date-value {
+  color: var(--text-color-alt);
+}
+.blog-entry-tags-value {
   color: var(--text-color-alt);
 }
