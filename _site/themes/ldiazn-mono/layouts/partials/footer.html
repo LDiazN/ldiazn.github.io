@@ -1,0 +1,12 @@
+{{ if .Site.Params.show_footer }}
+  {{ with .Site.Data.home.footer_entries }}
+    <hr>
+    <footer>
+      <ul class="nav-list">
+        {{ range . }}
+          <li><a href="{{ if hasPrefix .url "http" }}{{ .url }}{{ else }}{{ if hasPrefix .url "/" }}{{ .url }}{{ else }}/{{ .url }}{{ end }}{{ end }}">{{ .title }}</a></li>
+        {{ end }}
+      </ul>
+    </footer>
+  {{ end }}
+{{ end }}

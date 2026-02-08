@@ -1,0 +1,17 @@
+{{ define "title" }}Projects | {{ .Site.Title }}{{ end }}
+
+{{ define "main" }}
+{{ partial "header_table.html" (dict "ctx" . "Title" "Projects") }}
+
+{{ .Content }}
+
+{{ with .Site.Data.projects.highlight }}
+  {{ partial "project_card_table.html" (dict "item" . "external" true) }}
+{{ end }}
+
+{{ range .Site.Data.projects.entries }}
+  {{ partial "project_card_table.html" (dict "item" . "external" (hasPrefix .url "http")) }}
+{{ end }}
+
+{{ partial "footer.html" . }}
+{{ end }}

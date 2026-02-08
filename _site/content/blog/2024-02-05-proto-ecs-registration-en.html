@@ -1,0 +1,491 @@
+<p>When you write a game engine, you usually want to allow users to create custom data types to implement behavior. And sometimes you need some sort of reflection system to collect some metadata about those new data types. Consider <a href="https://docs.unrealengine.com/5.0/en-US/unreal-header-tool-for-unreal-engine/">Unreal Headers Tool</a> for example. In languages with limited reflection features like Rust and C++, this can be quite a challenge. In this article, I will explain how we approached this problem using macros in Rust for my hobby engine, <a href="">proto-ecs</a>.</p>
+
+<p>In proto-ecs, we decided to go for a <strong>data-oriented</strong> design. Entities are just containers of data and systems. This means that entities require some way of specifying which components they need and how they are initialized. In Rust, this problem is usually solved by manually adding data types in a project early on in the program setup. See <a href="https://bevyengine.org/learn/quick-start/getting-started/ecs/#your-first-system">this example from the Bevy engine</a>:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">bevy</span><span class="p">::</span><span class="nn">prelude</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">hello_world</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"hello world!"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nn">App</span><span class="p">::</span><span class="nf">new</span><span class="p">()</span>
+        <span class="nf">.add_systems</span><span class="p">(</span><span class="n">Update</span><span class="p">,</span> <span class="n">hello_world</span><span class="p">)</span>
+        <span class="nf">.run</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>However, we wanted data types to be registered within the engine without user input (consider something like Unreal or Unity) and that all the required wiring logic was handled within the file where data types are defined. Consider something like this:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">// my_component.rs</span>
+<span class="k">struct</span> <span class="n">MyComponent</span> <span class="p">{</span>
+    <span class="n">name</span> <span class="p">:</span> <span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="k">fn</span> <span class="nf">create_my_component</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="n">MyComponent</span> <span class="p">{</span>
+    <span class="n">MyComponent</span><span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="s">"default name"</span><span class="nf">.to_string</span><span class="p">()}</span>
+<span class="p">}</span>
+
+<span class="c">// Register some metadata related to this component</span>
+<span class="nd">register_component!</span><span class="p">(</span>
+    <span class="n">MyComponent</span><span class="p">,</span>
+    <span class="n">factory</span> <span class="o">=</span> <span class="n">create_my_component</span>
+<span class="p">)</span>
+
+<span class="c">// main.rs</span>
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// Automagically get metadata for all registered data types, </span>
+    <span class="k">for</span> <span class="n">comp_data</span> <span class="n">in</span> <span class="nf">get_all_components</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c">// Call the create_my_component function that was previously registered</span>
+        <span class="k">let</span> <span class="n">component</span> <span class="o">=</span> <span class="p">(</span><span class="n">comp_data</span><span class="py">.factory</span><span class="p">)();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<ol>
+  <li>We first define a <strong>component</strong> as a struct with the data it holds</li>
+  <li>Then we create a <strong>function</strong> that implements any required logic to create a new component (a <strong>factory function</strong>)</li>
+  <li>We register the component and the factory function</li>
+  <li>In the main function, we <em>automagically</em> have access to all defined components and their factory functions, plus any other metadata we might need.</li>
+</ol>
+
+<p>This system plays particularly well with serialization, we can just create a persistent ID on registration for each component and map it to the right factory function when restoring an instance.</p>
+
+<p>Now the core problem is, where in the program execution are components collected, if not in the main function in a setup step?</p>
+
+<h1 id="the-problem">The Problem</h1>
+
+<p>We want to somehow collect all components defined by users of the engine and register some metadata and their factory functions in some global variable accessible anywhere in the application. However, <a href="https://stackoverflow.com/questions/36416773/how-does-rust-implement-reflection">Rust has very limited support for reflection</a>, and we don’t want users to write them up in some central file.</p>
+
+<p>Additionally, notice that since we don’t have references to component types, we can’t just use the output of the factory function defined by the user, what type would it have? We need to wrap that function inside another one that returns some <a href="https://doc.rust-lang.org/book/ch17-02-trait-objects.html">trait object</a> we can type.</p>
+
+<p>We could make our main function, but how would we get references to all user-defined components? We could use macros to write a function that registers new components to a global component registry, but how would the main function get all references to those new functions?</p>
+
+<p>We could even register components on a global variable on a proc-macro when we are processing the <code class="language-plaintext highlighter-rouge">register_component!</code> macro and then add them with another macro in the main function when all components are registered, but <a href="https://github.com/rust-lang/reference/issues/578">the proc macro execution order is not guaranteed</a> (and global variables in proc macros are a <a href="https://stackoverflow.com/questions/52910783/is-it-possible-to-store-state-within-rusts-procedural-macros">bad idea</a> in general).</p>
+
+<p>We could try to use <a href="https://docs.rs/lazy_static/latest/lazy_static/"><code class="language-plaintext highlighter-rouge">lazy_static!</code></a> to register data types but we would have a similar problem when we tried to create registration functions with macros, the main function would require a way to reference all those lazy-static variables to call them at least once.</p>
+
+<p>So, if we can’t do anything from our main function, <em>is there something before main?</em></p>
+
+<h1 id="life-before-main">Life before main</h1>
+
+<p>In other languages sometimes you need to run some code before everything else in the application. This code runs even before the first line of code in the <code class="language-plaintext highlighter-rouge">main</code> function, take <a href="https://en.cppreference.com/w/cpp/language/initialization">static initializers</a> in C++ for example; This is what we call <strong>life before main</strong>. In Rust, <a href="https://doc.rust-lang.org/1.4.0/complement-design-faq.html#there-is-no-life-before-or-after-main-(no-static-ctors/dtors)">we don’t have life before main</a>, and there are <a href="http://yosefk.com/c++fqa/ctors.html#fqa-10.12">very good reasons</a> to avoid it, most of the use cases of life-before-main are handled pretty well by <a href="https://crates.io/crates/lazy_static">lazy-static initialization</a>, which is implemented by creating a variable that gets initialized at some point after main when the static variables are accessed for the first time. However, the plugin-registration style of static initialization we try to implement still requires actual life-before-main.</p>
+
+<p>This could be easier if Rust supported some syntax or feature to hook init functions to some explicitly specified point in main, and there’s an interesting discussion around this topic in this post titled ‘<a href="https://internals.rust-lang.org/t/from-life-before-main-to-common-life-in-main/16006">From “life before main” to “common life in main”</a>’. For now, we will stick to a non-portable life-before-main solution: <a href="https://crates.io/crates/ctor">ctor</a>.</p>
+
+<h1 id="running-code-before-main">Running code before main</h1>
+
+<p><strong>ctor</strong> is a crate that implements a macro that you can add to any function to force it to run before main:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">// From ctor documentation:</span>
+<span class="k">static</span> <span class="n">INITED</span><span class="p">:</span> <span class="n">AtomicBool</span> <span class="o">=</span> <span class="nn">AtomicBool</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
+
+<span class="nd">#[ctor]</span>
+<span class="k">fn</span> <span class="nf">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">INITED</span><span class="nf">.store</span><span class="p">(</span><span class="k">true</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">SeqCst</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">assert</span><span class="o">!</span><span class="p">(</span><span class="n">INITED</span><span class="nf">.load</span><span class="p">(</span><span class="nn">Ordering</span><span class="p">::</span><span class="n">SeqCst</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>In this code, we create a static variable <code class="language-plaintext highlighter-rouge">INITED</code> initialized to <code class="language-plaintext highlighter-rouge">false</code>.</li>
+  <li>We also create a function <code class="language-plaintext highlighter-rouge">foo</code> that sets <code class="language-plaintext highlighter-rouge">INITED</code> to <code class="language-plaintext highlighter-rouge">true</code></li>
+  <li>Since <code class="language-plaintext highlighter-rouge">foo</code> is marked with <code class="language-plaintext highlighter-rouge">#[ctor]</code>, it will be called before anything we do in the main function.</li>
+</ul>
+
+<p>The main idea here is to use <code class="language-plaintext highlighter-rouge">#[ctor]</code> along with a macro to push some data into some container whenever we want to register a new datatype.</p>
+
+<h2 id="a-quick-look-at-some-alternatives">A quick look at some alternatives</h2>
+<p>Before we continue, also consider the following crates:</p>
+
+<ul>
+  <li>
+    <p><strong><a href="https://crates.io/crates/inventory">inventory</a></strong> : This crate implements a more general-purpose version of what we’re about to do with <code class="language-plaintext highlighter-rouge">ctor</code>, it allows you to register struct instances with a macro. This crate works for most cases, so it’s very likely it fits your needs.</p>
+  </li>
+  <li>
+    <p><strong><a href="example-registration">linkme</a></strong> : This crate allows you to have static slices of elements that are gathered into a contiguous section in the binary. Allows you to have a pre-filled array of static items.</p>
+  </li>
+</ul>
+
+<p>We didn’t use those crates for <code class="language-plaintext highlighter-rouge">proto-ecs</code> because we needed a lot of macro code to register metadata and implement wiring boilerplate anyway, so Ctor was a better fit for our use case.</p>
+
+<h2 id="back-to-ctor">Back to ctor</h2>
+
+<p>Now, for the next example, we will implement a simple component registration macro similar to the one we 
+use in <code class="language-plaintext highlighter-rouge">proto-ecs</code>. The idea is that:</p>
+
+<ol>
+  <li>We define a <strong>component</strong> as a struct</li>
+  <li>The component provides a <strong>factory function</strong> that knows how to create a new instance</li>
+  <li>Using <strong>a macro</strong>, we <strong>register</strong> the component by:
+    <ol>
+      <li><strong>Creating an entry</strong> in the component registry for this struct. A component registry is just a container of metadata about components</li>
+      <li>Creating a <strong>wrapper function</strong> over the factory function that the component management system knows how to call</li>
+    </ol>
+  </li>
+</ol>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">crc32fast</span><span class="p">::</span><span class="n">hash</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">ctor</span><span class="p">::</span><span class="n">ctor</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">lazy_static</span><span class="p">::</span><span class="n">lazy_static</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">any</span><span class="p">::</span><span class="n">Any</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="n">Mutex</span><span class="p">;</span>
+
+<span class="c">// 1</span>
+<span class="nd">lazy_static!</span> <span class="p">{</span>
+<span class="k">static</span> <span class="k">ref</span> <span class="n">COMPONENT_REGISTRY</span><span class="p">:</span> <span class="n">Mutex</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">ComponentRegistryEntry</span><span class="o">&gt;&gt;</span> <span class="o">=</span> <span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nd">vec!</span><span class="p">[]);</span>
+<span class="p">}</span>
+
+<span class="nd">#[derive(Debug)]</span>
+<span class="k">struct</span> <span class="n">ComponentRegistryEntry</span> <span class="p">{</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span>
+    <span class="n">name_crc</span><span class="p">:</span> <span class="nb">u32</span><span class="p">,</span>
+    <span class="n">factory</span><span class="p">:</span> <span class="k">fn</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="nb">Box</span><span class="o">&lt;</span><span class="n">dyn</span> <span class="n">Any</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">id</span><span class="p">:</span> <span class="nb">u32</span>
+<span class="p">}</span>
+<span class="c">// 2</span>
+<span class="nd">macro_rules!</span> <span class="n">register_component</span> <span class="p">{</span>
+    <span class="p">(</span><span class="nv">$component:ident</span><span class="p">,</span> <span class="nv">$function:ident</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+        <span class="nd">#[ctor]</span>
+        <span class="k">fn</span> <span class="nf">add_to_register</span><span class="p">()</span> <span class="p">{</span>
+
+            <span class="c">// 2.1</span>
+            <span class="k">fn</span> <span class="nf">factory_any</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="nb">Box</span><span class="o">&lt;</span><span class="n">dyn</span> <span class="n">Any</span><span class="o">&gt;</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="n">component</span> <span class="o">=</span> <span class="nv">$function</span><span class="p">();</span>
+                <span class="nn">Box</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+            <span class="p">}</span>
+
+            <span class="c">// 2.2</span>
+            <span class="k">let</span> <span class="mi">_</span> <span class="o">=</span> <span class="n">COMPONENT_REGISTRY</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.as_mut</span><span class="p">()</span><span class="nf">.and_then</span><span class="p">(|</span><span class="n">registry</span><span class="p">|</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="n">id</span> <span class="o">=</span> <span class="n">registry</span><span class="nf">.len</span><span class="p">()</span> <span class="k">as</span> <span class="nb">u32</span><span class="p">;</span>
+                <span class="n">registry</span><span class="nf">.push</span><span class="p">(</span><span class="n">ComponentRegistryEntry</span> <span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="nd">stringify!</span><span class="p">(</span><span class="nv">$component</span><span class="p">)</span><span class="nf">.to_string</span><span class="p">(),</span>
+                <span class="n">name_crc</span><span class="p">:</span> <span class="nf">hash</span><span class="p">(</span><span class="nd">stringify!</span><span class="p">(</span><span class="nv">$component</span><span class="p">)</span><span class="nf">.as_bytes</span><span class="p">()),</span>
+                <span class="n">factory</span><span class="p">:</span> <span class="n">factory_any</span><span class="p">,</span>
+                <span class="n">id</span> 
+                <span class="p">});</span>
+                <span class="nf">Ok</span><span class="p">(())</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+<span class="c">// 3</span>
+<span class="k">struct</span> <span class="n">MyComponent</span> <span class="p">{</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="c">// 4</span>
+<span class="k">fn</span> <span class="nf">create_component</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="n">MyComponent</span> <span class="p">{</span>
+    <span class="n">MyComponent</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="s">"Default Name"</span><span class="nf">.to_string</span><span class="p">(),</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="c">// 5</span>
+<span class="nd">register_component!</span> <span class="p">{</span>
+    <span class="n">MyComponent</span><span class="p">,</span>
+    <span class="n">create_component</span>
+<span class="p">}</span>
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">registry</span> <span class="o">=</span> <span class="n">COMPONENT_REGISTRY</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+
+    <span class="c">// 6</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="n">in</span> <span class="n">registry</span><span class="nf">.iter</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">any_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">entry</span><span class="py">.factory</span><span class="p">)();</span>
+        <span class="k">let</span> <span class="n">component</span> <span class="o">=</span> <span class="n">any_value</span><span class="py">.downcast_ref</span><span class="p">::</span><span class="o">&lt;</span><span class="n">MyComponent</span><span class="o">&gt;</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+
+        <span class="c">// name: MyComponent, name_crc: 1359051788, id: 0</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"name: {}, name_crc: {}, id: {}"</span><span class="p">,</span> <span class="n">entry</span><span class="py">.name</span><span class="p">,</span> <span class="n">entry</span><span class="py">.name_crc</span><span class="p">,</span> <span class="n">entry</span><span class="py">.id</span><span class="p">);</span>
+        <span class="c">// Component name: Default Name</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"Component name: {}"</span><span class="p">,</span> <span class="n">component</span><span class="py">.name</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Let’s go step by step with this code:</p>
+
+<ol>
+  <li>
+    <p>We first create a registry, a <strong>vector of entries</strong>, of components. Each entry is defined by some metadata about the component, in this case, the name, a CRC of the name that you could use for persistent storage, and the factory function. The registry is static so it can be reached from any point. Also, note that lazy static doesn’t allow direct mutable references to anything, so you have to rely on some structure with <a href="https://dhghomon.github.io/easy_rust/Chapter_41.html">interior mutability</a>, in this case, a mutex</p>
+  </li>
+  <li>We define a macro that, given a struct identifier and a function identifier, <strong>expands to a new function</strong> marked with <code class="language-plaintext highlighter-rouge">ctor</code>. This function will be run automatically before main. In this function we:
+    <ol>
+      <li>Define the <strong>wrapper</strong> for the factory function</li>
+      <li><strong>Push a new entry</strong> for the component registration system, using the metadata we can compute from the macro.</li>
+    </ol>
+  </li>
+  <li><strong>Define a component</strong> by creating a struct type with some data</li>
+  <li><strong>Define the factory function</strong> for that struct. Note that the factory function returns an instance of the struct.</li>
+  <li>We use the macro we defined earlier to register the component</li>
+  <li>Finally, in the main function, we check that our component is <strong>registered without doing anything</strong>!</li>
+</ol>
+
+<blockquote>
+  <p>Note that since the macro defines a new function right were it’s called, multiple macro invocations can generate errors with multiple components. It can also become anoying because we’re generating functions that the user can call but he shouldn’t. To fix this problem, you can use the following cool scoping trick: When writing the macro, you write the generated function like this: <code class="language-plaintext highlighter-rouge">const _ : () = {/*your generated function goes here*/};</code>. This way, the function exists but is not reachable outside the <code class="language-plaintext highlighter-rouge">= {...};</code> block. <code class="language-plaintext highlighter-rouge">ctor</code> will have no problem to find the function, and your users won’t complain about all that garbage in their code suggestions.</p>
+</blockquote>
+
+<p>This is the minimal setup you need to build a registration system, and works for simple cases just like this. However, things get a bit harder when we try to introduce dependencies between registered items.</p>
+
+<h1 id="dependencies-and-execution-order">Dependencies and execution order</h1>
+
+<p>Now consider the following use case: We want to create systems that <em>depend</em> on components. This way, if we add that system to some game entity, we know which components that entity must provide, and therefore we take useful actions like telling the user in advance that the entity is missing some required components or even adding them right away. For our purposes, we will consider that a function of type <code class="language-plaintext highlighter-rouge">(Vec&lt;Box&lt;dyn Any&gt;&gt;) -&gt; ()</code> is a system.</p>
+
+<p>We will need a way to add IDs to components if we want to check in runtime which components an entity depends on. Let’s define and implement a trait to help us with that:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">// New dependency:</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">cell</span><span class="p">::</span><span class="n">OnceCell</span><span class="p">;</span>
+
+<span class="c">// New trait:</span>
+<span class="k">pub</span> <span class="k">trait</span> <span class="n">HasID</span> <span class="p">{</span>
+    <span class="k">fn</span> <span class="nf">get_id</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="nb">u32</span><span class="p">;</span>
+    <span class="k">fn</span> <span class="nf">set_id</span><span class="p">(</span><span class="n">new_id</span> <span class="p">:</span> <span class="nb">u32</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">// Modify component registration</span>
+<span class="nd">macro_rules!</span> <span class="n">register_component</span> <span class="p">{</span>
+    <span class="p">(</span><span class="nv">$component:ident</span><span class="p">,</span> <span class="nv">$function:ident</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+        <span class="nd">#[ctor]</span>
+        <span class="k">fn</span> <span class="nf">add_to_component_registry</span><span class="p">()</span> <span class="p">{</span>
+            <span class="c">// Add wraper over factory function...</span>
+
+            <span class="k">let</span> <span class="mi">_</span> <span class="o">=</span> <span class="n">COMPONENT_REGISTRY</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.as_mut</span><span class="p">()</span><span class="nf">.and_then</span><span class="p">(|</span><span class="n">registry</span><span class="p">|</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="n">id</span> <span class="o">=</span> <span class="n">registry</span><span class="nf">.len</span><span class="p">()</span> <span class="k">as</span> <span class="nb">u32</span><span class="p">;</span>
+                <span class="c">// Push this component to the registry...</span>
+                <span class="nv">$component</span><span class="p">::</span><span class="nf">set_id</span><span class="p">(</span><span class="n">id</span><span class="p">);</span> <span class="c">// New: Set id for this component</span>
+                <span class="nf">Ok</span><span class="p">(())</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+
+        <span class="c">// New: Where we store the  actual id</span>
+        <span class="k">static</span> <span class="n">COMPONENT_ID</span> <span class="p">:</span> <span class="n">Mutex</span><span class="o">&lt;</span><span class="n">OnceCell</span><span class="o">&lt;</span><span class="nb">u32</span><span class="o">&gt;&gt;</span> <span class="o">=</span> <span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">OnceCell</span><span class="p">::</span><span class="nf">new</span><span class="p">());</span>
+
+        <span class="c">// New: Trait implementation</span>
+        <span class="k">impl</span> <span class="n">HasID</span> <span class="k">for</span> <span class="nv">$component</span>
+        <span class="p">{</span>
+            <span class="k">fn</span> <span class="nf">get_id</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="nb">u32</span>
+            <span class="p">{</span>
+                <span class="o">*</span><span class="n">COMPONENT_ID</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">()</span><span class="nf">.get</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"ID not yet set"</span><span class="p">)</span>
+            <span class="p">}</span>
+
+            <span class="k">fn</span> <span class="nf">set_id</span><span class="p">(</span><span class="n">new_id</span> <span class="p">:</span> <span class="nb">u32</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">let</span> <span class="mi">_</span> <span class="o">=</span> <span class="n">COMPONENT_ID</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.as_mut</span><span class="p">()</span><span class="nf">.map</span><span class="p">(</span>
+                        <span class="p">|</span><span class="n">id</span><span class="p">|</span> <span class="p">{</span> <span class="k">let</span> <span class="mi">_</span> <span class="o">=</span> <span class="n">id</span><span class="nf">.set</span><span class="p">(</span><span class="n">new_id</span><span class="p">)</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"ID already set"</span><span class="p">);</span> <span class="p">}</span>
+                    <span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>In this code, we are just giving components the ability to have an ID.</p>
+
+<ol>
+  <li>We define a new Trait that provides the API to accessing the ID.</li>
+  <li>We implement the <code class="language-plaintext highlighter-rouge">HasID</code> trait automagically within the macro expansion.
+    <ol>
+      <li>Note that we store the ID in a static variable so that it’s accessible anywhere when the function is called</li>
+      <li>Also, note that we use <code class="language-plaintext highlighter-rouge">OnceCell</code> so that the ID can only be modified once. Further <code class="language-plaintext highlighter-rouge">set</code> operations will crash the application.</li>
+      <li>We use a <strong>Mutex</strong> as a simple way to share the ID between threads (which is demanded by the compiler), but you should probably use better synchronization mechanisms. For example, consider changing the Mutex for a <a href="https://doc.rust-lang.org/std/sync/struct.RwLock.html">RwLock</a> and using <a href="https://crates.io/crates/once_cell">once_cell</a> as the  <code class="language-plaintext highlighter-rouge">OnceCell</code> backend.</li>
+    </ol>
+  </li>
+</ol>
+
+<p>Now that components can provide an ID, we can create a system registration macro similar to the one we use for components:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">lazy_static!</span> <span class="p">{</span>
+    <span class="k">static</span> <span class="k">ref</span> <span class="n">SYSTEM_REGISTRY</span><span class="p">:</span> <span class="n">Mutex</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SystemRegistryEntry</span><span class="o">&gt;&gt;</span> <span class="o">=</span> <span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nd">vec!</span><span class="p">[]);</span>
+<span class="p">}</span>
+
+<span class="nd">#[derive(Debug)]</span>
+<span class="k">struct</span> <span class="n">SystemRegistryEntry</span> <span class="p">{</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span>
+    <span class="n">name_crc</span><span class="p">:</span> <span class="nb">u32</span><span class="p">,</span>
+    <span class="n">function</span><span class="p">:</span> <span class="k">fn</span><span class="p">(</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">dyn</span> <span class="n">Any</span><span class="o">&gt;&gt;</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="p">(),</span>
+    <span class="n">id</span><span class="p">:</span> <span class="nb">u32</span><span class="p">,</span>
+    <span class="n">dependencies</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u32</span><span class="o">&gt;</span>
+<span class="p">}</span>
+
+<span class="nd">macro_rules!</span> <span class="n">register_system</span> <span class="p">{</span>
+    <span class="p">(</span><span class="nv">$function:ident</span><span class="p">,</span> <span class="n">dependencies</span> <span class="o">=</span> <span class="p">[</span><span class="nv">$</span><span class="p">(</span><span class="nv">$dependency:ident</span><span class="p">),</span><span class="o">*</span><span class="p">])</span> <span class="k">=&gt;</span> <span class="p">{</span>
+        <span class="nd">#[ctor]</span>
+        <span class="k">fn</span> <span class="nf">add_to_system_registry</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">let</span> <span class="mi">_</span> <span class="o">=</span> <span class="n">SYSTEM_REGISTRY</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.as_mut</span><span class="p">()</span><span class="nf">.and_then</span><span class="p">(|</span><span class="n">registry</span><span class="p">|</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="n">dependencies</span> <span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">u32</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[</span><span class="nv">$</span><span class="p">(</span><span class="nv">$dependency</span> <span class="p">::</span><span class="nf">get_id</span><span class="p">()</span> <span class="p">),</span><span class="o">*</span><span class="p">];</span>
+                <span class="k">let</span> <span class="n">id</span> <span class="o">=</span> <span class="n">registry</span><span class="nf">.len</span><span class="p">()</span> <span class="k">as</span> <span class="nb">u32</span><span class="p">;</span>
+                    <span class="n">registry</span><span class="nf">.push</span><span class="p">(</span><span class="n">SystemRegistryEntry</span><span class="p">{</span>
+                    <span class="n">name</span><span class="p">:</span> <span class="nd">stringify!</span><span class="p">(</span><span class="nv">$function</span><span class="p">)</span><span class="nf">.to_string</span><span class="p">(),</span>
+                    <span class="n">name_crc</span><span class="p">:</span> <span class="nf">hash</span><span class="p">(</span><span class="nd">stringify!</span><span class="p">(</span><span class="nv">$function</span><span class="p">)</span><span class="nf">.as_bytes</span><span class="p">()),</span>
+                    <span class="n">function</span><span class="p">:</span> <span class="nv">$function</span><span class="p">,</span>
+                    <span class="n">dependencies</span><span class="p">,</span>
+                    <span class="n">id</span> 
+                <span class="p">});</span>
+                <span class="nf">Ok</span><span class="p">(())</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="c">// A sample system</span>
+<span class="k">fn</span> <span class="nf">my_system</span> <span class="p">(</span><span class="n">components</span> <span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">Box</span><span class="o">&lt;</span><span class="n">dyn</span> <span class="n">Any</span><span class="o">&gt;&gt;</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">let</span> <span class="n">comp</span> <span class="p">:</span> <span class="o">&amp;</span><span class="n">MyComponent</span> <span class="o">=</span> <span class="n">components</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="nf">.downcast_ref</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"My component is: {}"</span><span class="p">,</span> <span class="n">comp</span><span class="py">.name</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>As you can see, we follow the same pattern we used for components, but we add the <code class="language-plaintext highlighter-rouge">dependencies</code> list that contains the IDs of all components required by this entity. For now we won’t do anything fancy to keep the code simple, but you could do anything you want. For example, you could create a wrapper function over the system function to do type-checking over the components list in runtime.</p>
+
+<p>Now we will register the system and the component with our new registration macros:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">register_component!</span> <span class="p">{</span>
+    <span class="n">MyComponent</span><span class="p">,</span>
+    <span class="n">create_component</span>
+<span class="p">}</span>
+<span class="nd">register_system!</span><span class="p">(</span><span class="n">my_system</span><span class="p">,</span> <span class="n">dependencies</span><span class="o">=</span> <span class="p">[</span><span class="n">MyComponent</span><span class="p">]);</span> <span class="c">// New</span>
+</code></pre></div></div>
+
+<p>And we update the main properly to check our work:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">comp_registry</span> <span class="o">=</span> <span class="n">COMPONENT_REGISTRY</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="n">in</span> <span class="n">comp_registry</span><span class="nf">.iter</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">any_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">entry</span><span class="py">.factory</span><span class="p">)();</span>
+        <span class="k">let</span> <span class="n">component</span> <span class="o">=</span> <span class="n">any_value</span><span class="py">.downcast_ref</span><span class="p">::</span><span class="o">&lt;</span><span class="n">MyComponent</span><span class="o">&gt;</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+        <span class="c">// name: MyComponent, name_crc: 1359051788, id: 0</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"name: {}, name_crc: {}, id: {}"</span><span class="p">,</span> <span class="n">entry</span><span class="py">.name</span><span class="p">,</span> <span class="n">entry</span><span class="py">.name_crc</span><span class="p">,</span> <span class="n">entry</span><span class="py">.id</span><span class="p">);</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"Component name: {}"</span><span class="p">,</span> <span class="n">component</span><span class="py">.name</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c">// New</span>
+    <span class="k">let</span> <span class="n">system_registry</span> <span class="o">=</span> <span class="n">SYSTEM_REGISTRY</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="n">in</span> <span class="n">system_registry</span><span class="nf">.iter</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c">// System name: my_system, id: 0, dependencies: [0]</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"System name: {}, id: {}, dependencies: {:?}"</span><span class="p">,</span> <span class="n">entry</span><span class="py">.name</span><span class="p">,</span> <span class="n">entry</span><span class="py">.id</span><span class="p">,</span> <span class="n">entry</span><span class="py">.dependencies</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Now everything should be going smoothly until now. But let’s see what happens if we change the registration order between our component and our system:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">// Mind the registration order</span>
+<span class="nd">register_system!</span><span class="p">(</span><span class="n">my_system</span><span class="p">,</span> <span class="n">dependencies</span> <span class="o">=</span> <span class="p">[</span><span class="n">MyComponent</span><span class="p">]);</span>
+<span class="nd">register_component!</span> <span class="p">{</span>
+    <span class="n">MyComponent</span><span class="p">,</span>
+    <span class="n">create_component</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>If we rerun the code, we get the following error:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>thread <span class="s1">'&lt;unnamed&gt;'</span> panicked at src<span class="se">\m</span>ain.rs:127:1:
+ID not yet <span class="nb">set
+</span>note: run with <span class="sb">`</span><span class="nv">RUST_BACKTRACE</span><span class="o">=</span>1<span class="sb">`</span> environment variable to display a backtrace
+error: process didn<span class="s1">'t exit successfully: `target\debug\example-registration.exe` (exit code: 0xc0000409, STATUS_STACK_BUFFER_OVERRUN)
+</span></code></pre></div></div>
+
+<p>We get this error because we registered <code class="language-plaintext highlighter-rouge">my_system</code> function before <code class="language-plaintext highlighter-rouge">MyComponent</code>, and the registration function for <code class="language-plaintext highlighter-rouge">my_system</code> happened to be run before the one used for <code class="language-plaintext highlighter-rouge">MyComponent</code>, and the ID for <code class="language-plaintext highlighter-rouge">MyComponent</code> was not yet configured.</p>
+
+<p>Now is when we remember why Rust didn’t allow life before main in the first place, and this is a very good reason why we shouldn’t be doing this: span this problem over multiple files and we get an undebuggable mess. However, we still have one more trick to get away with our registration feature.</p>
+
+<p>See, the problem here is that we implicitly assume that components are loaded every time we register a system, which cannot be ensured because ctor-marked functions execution order is not guaranteed. We have to make sure that <strong>functions that are marked with ctor can be called in any order</strong>.</p>
+
+<p>Instead of executing functions that register systems and components, we will store them, and then call them in the right order. The change we have to make is simple, we will just store a function that does everything we have been doing so far, and then just call it in main before doing anything else.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">// Component registration data types:</span>
+<span class="nd">lazy_static!</span> <span class="p">{</span>
+    <span class="k">static</span> <span class="k">ref</span> <span class="n">COMPONENT_REGISTRY</span><span class="p">:</span> <span class="n">Mutex</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">ComponentRegistryEntry</span><span class="o">&gt;&gt;</span> <span class="o">=</span> <span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nd">vec!</span><span class="p">[]);</span>
+<span class="p">}</span>
+
+<span class="c">// New: We store registration functions in this vector</span>
+<span class="nd">lazy_static!</span> <span class="p">{</span>
+    <span class="k">static</span> <span class="k">ref</span> <span class="n">COMPONENT_REGISTRATION_FUNCTIONS</span><span class="p">:</span> <span class="n">Mutex</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="k">fn</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="p">()</span><span class="o">&gt;&gt;</span> <span class="o">=</span> <span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nd">vec!</span><span class="p">[]);</span>
+<span class="p">}</span>
+
+<span class="c">// Component Registration macro:</span>
+<span class="nd">macro_rules!</span> <span class="n">register_component</span> <span class="p">{</span>
+    <span class="p">(</span><span class="nv">$component:ident</span><span class="p">,</span> <span class="nv">$function:ident</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+        <span class="nd">#[ctor]</span>
+        <span class="k">fn</span> <span class="nf">add_to_component_registry</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">fn</span> <span class="nf">function_to_add</span><span class="p">()</span> <span class="p">{</span>
+                <span class="c">// Everything we used to do in this function before...</span>
+            <span class="p">}</span>
+
+            <span class="c">// New: Add this function to the functions-to-run list</span>
+            <span class="k">let</span> <span class="mi">_</span> <span class="o">=</span> <span class="n">COMPONENT_REGISTRATION_FUNCTIONS</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.as_mut</span><span class="p">()</span><span class="nf">.map</span><span class="p">(|</span><span class="n">functions</span><span class="p">|</span> <span class="p">{</span>
+                <span class="n">functions</span><span class="nf">.push</span><span class="p">(</span><span class="n">function_to_add</span><span class="p">);</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c">// Trait implementation...</span>
+<span class="p">}</span>
+
+<span class="c">// System registration data types:</span>
+<span class="nd">lazy_static!</span> <span class="p">{</span>
+    <span class="k">static</span> <span class="k">ref</span> <span class="n">SYSTEM_REGISTRY</span><span class="p">:</span> <span class="n">Mutex</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="n">SystemRegistryEntry</span><span class="o">&gt;&gt;</span> <span class="o">=</span> <span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nd">vec!</span><span class="p">[]);</span>
+<span class="p">}</span>
+
+<span class="c">// New: We store system registration functions in this vector</span>
+<span class="nd">lazy_static!</span> <span class="p">{</span>
+    <span class="k">static</span> <span class="k">ref</span> <span class="n">SYSTEM_REGISTRATION_FUNCTIONS</span><span class="p">:</span> <span class="n">Mutex</span><span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;</span><span class="k">fn</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="p">()</span><span class="o">&gt;&gt;</span> <span class="o">=</span> <span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nd">vec!</span><span class="p">[]);</span>
+<span class="p">}</span>
+
+<span class="c">// System registration macro:</span>
+<span class="nd">macro_rules!</span> <span class="n">register_system</span> <span class="p">{</span>
+    <span class="p">(</span><span class="nv">$function:ident</span><span class="p">,</span> <span class="n">dependencies</span> <span class="o">=</span> <span class="p">[</span><span class="nv">$</span><span class="p">(</span><span class="nv">$dependency:ident</span><span class="p">),</span><span class="o">*</span><span class="p">])</span> <span class="k">=&gt;</span> <span class="p">{</span>
+        <span class="nd">#[ctor]</span>
+        <span class="k">fn</span> <span class="nf">add_to_system_registry</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">fn</span> <span class="nf">function_to_add</span><span class="p">()</span> <span class="p">{</span>
+                <span class="c">// Everything we used to do here...</span>
+            <span class="p">}</span>
+
+            <span class="c">// New: Add the function to the registration function list</span>
+            <span class="k">let</span> <span class="mi">_</span> <span class="o">=</span> <span class="n">SYSTEM_REGISTRATION_FUNCTIONS</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.as_mut</span><span class="p">()</span><span class="nf">.map</span><span class="p">(|</span><span class="n">functions</span><span class="p">|</span> <span class="p">{</span>
+                <span class="n">functions</span><span class="nf">.push</span><span class="p">(</span><span class="n">function_to_add</span><span class="p">);</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c">// New: Register components and systems in the right order</span>
+    <span class="k">for</span> <span class="n">comp_fn</span> <span class="n">in</span> <span class="n">COMPONENT_REGISTRATION_FUNCTIONS</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.as_ref</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">()</span><span class="nf">.iter</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nf">comp_fn</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">sys_fn</span> <span class="n">in</span> <span class="n">SYSTEM_REGISTRATION_FUNCTIONS</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.as_ref</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">()</span><span class="nf">.iter</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nf">sys_fn</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">let</span> <span class="n">comp_registry</span> <span class="o">=</span> <span class="n">COMPONENT_REGISTRY</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="n">in</span> <span class="n">comp_registry</span><span class="nf">.iter</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">any_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">entry</span><span class="py">.factory</span><span class="p">)();</span>
+        <span class="k">let</span> <span class="n">component</span> <span class="o">=</span> <span class="n">any_value</span><span class="py">.downcast_ref</span><span class="p">::</span><span class="o">&lt;</span><span class="n">MyComponent</span><span class="o">&gt;</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+        <span class="c">// name: MyComponent, name_crc: 1359051788, id: 0</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"name: {}, name_crc: {}, id: {}"</span><span class="p">,</span> <span class="n">entry</span><span class="py">.name</span><span class="p">,</span> <span class="n">entry</span><span class="py">.name_crc</span><span class="p">,</span> <span class="n">entry</span><span class="py">.id</span><span class="p">);</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"Component name: {}"</span><span class="p">,</span> <span class="n">component</span><span class="py">.name</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">let</span> <span class="n">system_registry</span> <span class="o">=</span> <span class="n">SYSTEM_REGISTRY</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="n">in</span> <span class="n">system_registry</span><span class="nf">.iter</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c">// System name: my_system, id: 0, dependencies: [0]</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"System name: {}, id: {}, dependencies: {:?}"</span><span class="p">,</span> <span class="n">entry</span><span class="py">.name</span><span class="p">,</span> <span class="n">entry</span><span class="py">.id</span><span class="p">,</span> <span class="n">entry</span><span class="py">.dependencies</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>In this code, we just add static vectors where we store function pointers to the actual functions that perform the registration. In the ctor-function, we define the registration function and then push it to the vector. Note that we are still using ctor, but the operations we mark with ctor are <strong>independent of one another</strong>.</p>
+
+<p>Finally, we run all the registration functions with an explicit order we can control. We said before that we didn’t want a setup step in the main function, but this is one that we can afford because we only need a reference to the function list, we don’t need a reference to each new data type!</p>
+
+<h1 id="final-thoughts">Final thoughts</h1>
+
+<p>This is more or less how we solved the registration problem in proto-ecs. With this approach, we can do the minimum amount of work needed to register data types throughout the project in a safe way, since the only work done is a vector push operation. We can also control the registration order, so we have fine-grained control over our app setup. Here are some additional things to consider:</p>
+
+<ul>
+  <li>I highly encourage using <a href="https://doc.rust-lang.org/reference/procedural-macros.html">proc-macros</a> instead of <a href="https://doc.rust-lang.org/reference/macros-by-example.html">macros-by-example</a>. We used macros-by-example here to simplify the article’s code, but many things are easier to do with proc-macros.</li>
+  <li>The resulting code is <strong>not multi-platform</strong> by any means, since <code class="language-plaintext highlighter-rouge">ctor</code> itself is not.</li>
+  <li>All the reasons to avoid <strong>life-before-main</strong> are still valid, try to reduce the amount of work done with <code class="language-plaintext highlighter-rouge">ctor</code> as much as possible. The idea here is to move towards <strong>common-life-in-main</strong>.</li>
+</ul>
+
+<p>This was one of the most interesting parts of the development of proto-ecs, and the process of understanding how crates like <code class="language-plaintext highlighter-rouge">ctor</code> or <code class="language-plaintext highlighter-rouge">inventory</code> are implemented was a fun and educational experience. I hope you learn something from this article as well!</p>

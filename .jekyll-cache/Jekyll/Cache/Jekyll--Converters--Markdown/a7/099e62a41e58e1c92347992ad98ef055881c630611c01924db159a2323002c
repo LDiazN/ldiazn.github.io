@@ -1,0 +1,814 @@
+I"@�<p><br />
+<img src="/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif" alt="Toroide que gira en una terminal, usando arte ASCII" /></p>
+
+<p>Cuando estaba aprendiendo a programar me topé con <a href="https://www.a1k0n.net/2011/07/20/donut-math.html">donut.c</a>, un programa escrito en C por <strong>Andy Sloane</strong>. Su objetivo era renderizar una dona girando aleatoriamente en el espacio en la terminal usando C ofuscado, incluso su código tiene forma de dona:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>             k;double sin()
+         ,cos();main(){float A=
+       0,B=0,i,j,z[1760];char b[
+     1760];printf("\x1b[2J");for(;;
+  ){memset(b,32,1760);memset(z,0,7040)
+  ;for(j=0;6.28&gt;j;j+=0.07)for(i=0;6.28
+ &gt;i;i+=0.02){float c=sin(i),d=cos(j),e=
+ sin(A),f=sin(j),g=cos(A),h=d+2,D=1/(c*
+ h*e+f*g+5),l=cos      (i),m=cos(B),n=s\
+in(B),t=c*h*g-f*        e;int x=40+30*D*
+(l*h*m-t*n),y=            12+15*D*(l*h*n
++t*m),o=x+80*y,          N=8*((f*e-c*d*g
+ )*m-c*d*e-f*g-l        *d*n);if(22&gt;y&amp;&amp;
+ y&gt;0&amp;&amp;x&gt;0&amp;&amp;80&gt;x&amp;&amp;D&gt;z[o]){z[o]=D;;;b[o]=
+ ".,-~:;=!*#$@"[N&gt;0?N:0];}}/*#****!!-*/
+  printf("\x1b[H");for(k=0;1761&gt;k;k++)
+   putchar(k%80?b[k]:10);A+=0.04;B+=
+     0.02;}}/*****####*******!!=;:~
+       ~::==!!!**********!!!==::-
+         .,~~;;;========;;;:~-.
+             ..,--------,*/
+</code></pre></div></div>
+
+<p><strong>donut.c</strong> tiene un lugar especial en mi corazón por el momento en que me topé con él, en su momento se sentía como magia. Ahora que ha pasado el tiempo y sé mucho más que antes, quiero escribir este artículo como la explicación que me habría gustado tener cuando lo vi por primera vez.</p>
+
+<p>Una propiedad interesante de <strong>donut.c</strong> es que representa la versión mínima viable del pipeline de computación gráfica, se implementa sobre una versión reducida de las bases que usamos para implementar un render. Y lo mejor de todo es que se puede implementar usando un único archivo, sin necesidad de dependencias adicionales más allá de la librería de matemáticas de C.</p>
+
+<p>En este artículo implementaremos paso a paso una versión más legible de donut.c, esta vez en C++. Siguiendo el espíritu de donut.c, tendremos los siguientes objetivos:</p>
+
+<ol>
+  <li>El código debe ser <strong>un sólo archivo</strong>, <code class="language-plaintext highlighter-rouge">torus.cpp</code></li>
+  <li>El código debe ser <strong>lo más sencillo posible</strong>, trataremos de usar solo funciones y estructuras de control básicas.</li>
+  <li><strong>No importaremos nada adicional</strong>, más allá de algunas librerías de C++ para imprimir, tomar el tiempo, y hacer cálculos matemáticos.</li>
+  <li>Por fines didácticos, nuestro programa estará más enfocado en la <strong>legibilidad</strong> que en la ofuscasión, a diferencia del programa de Sloane.</li>
+  <li>Finalmente, ¡vamos a dibujar una dona (torus o toroide) rotando en la terminal!</li>
+</ol>
+
+<h1 id="dibujando-en-la-terminal">Dibujando en la terminal</h1>
+
+<p>La idea es crear un programa que se ejecute infinitamente reemplazando una matriz de caracteres de tamaño $R$ en la terminal con una pequeña variación de sí misma. Sin embargo, usualmente la terminal está destinada a imprimir texto de forma continua, dejando registro del texto que se ha impreso hasta ahora, a diferencia de las ventanas donde se dibuja una interfaz gráfica que se actualiza en cada iteración del programa. Por esta razón, lo primero que debemos hacer es buscar una forma de actualizar un conjunto de celdas en una terminal en lugar de empilarlas continuamente. Esto varía un poco según el emulador de terminal que uses, pero sigue más o menos el mismo patrón en todos: <strong>Códigos de escape ANSI</strong>.</p>
+
+<p>Los códigos de escape ANSI se usan para indicarle algún comportamiento en particular a la terminal, como imprimir los caracteres en cierto color o tipo de fuente, o cambiar la posición del cursor, que es el caso que nos interesa ahora mismo</p>
+
+<p>Usaremos códigos ANSI para indicarle al emulador de terminal que mueva el cursor, que es la barra blanca que marca el la posición del siguiente caracter a introducir. Usualmente siempre está al final del texto más reciente, pero usando códigos de escape ANSI podemos indicarle que se mueva a la posición que necesitemos.</p>
+
+<p>Para saber más sobre códigos de escape ANSI, en <a href="https://notes.burke.libbey.me/ansi-escape-codes/">este artículo</a> puedes conseguir una buena explicación al respecto. Por ahora solo nos interesa saber que el código que necesitamos tiene la siguiente forma <code class="language-plaintext highlighter-rouge">\033[&lt;un_numero&gt;A</code> , donde:</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">\033[</code> indica que estamos llamando a una función</li>
+  <li><code class="language-plaintext highlighter-rouge">A</code> es el nombre de la función, que en este caso significa “mover cursor una cantidad de filas hacia arriba”</li>
+  <li><code class="language-plaintext highlighter-rouge">&lt;un_numero&gt;</code> es el argumento de la función, que en este caso representa la cantidad de líneas que queremos saltar.</li>
+</ol>
+
+<p>Ahora, ¿cómo podemos utilizar esto? Queremos imprimir y reemplazar una matriz de tamaño $R \times R$, esto podemos hacerlo con el siguiente loop:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Imprime continuamente cada vez que puedas</span>
+<span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> 
+        <span class="p">{</span>
+            <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"#"</span><span class="p">;</span> <span class="c1">// Imprime los caracteres de esta línea</span>
+            <span class="c1">// En algunas terminales puede haber más espacio entre filas que entre </span>
+            <span class="c1">// columnas de texto, para estos casos podemos añadir un espacio en blanco</span>
+            <span class="c1">// en forma de padding entre columnas.</span>
+            <span class="c1">// cout &lt;&lt; " "; </span>
+        <span class="p">}</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>  <span class="c1">// Imprime el salto de línea que marca el final de la línea</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Esto es necesario para forzar a la terminal a imprimir lo que tiene en buffer</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">flush</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Consideremos este ciclo, al final del doble ciclo <strong><em>for</em></strong> habremos impreso R filas en la terminal, y el cursor estará en la fila R+1, porque la última fila también incluye un salto de línea. Más aun, estará al <strong>inicio</strong> de la fila R+1, por lo que para volver a la posición original, solo necesitamos mover el cursor R filas hacia arriba, imprimiendo el código <code class="language-plaintext highlighter-rouge">\033[RA</code> con <code class="language-plaintext highlighter-rouge">cout</code> :</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ... doble for</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">flush</span><span class="p">;</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"</span><span class="se">\033</span><span class="s">["</span> <span class="o">&lt;&lt;</span> <span class="n">R</span> <span class="o">&lt;&lt;</span> <span class="s">"A"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Podemos visualizar esto más fácilmente con un ejemplo:</p>
+
+<p><img src="/assets/images/torus-cpp//Ejemplo_mover_cursor_en_terminal.jpg" alt="Ejemplo mover cursor en terminal.jpg" /></p>
+
+<p>Ahora que definimos un área consistente donde dibujar, aun nos faltan dos cosas para empezar a trabajar en el renderizado:</p>
+
+<ul>
+  <li><strong>Un intervalo de tiempo:</strong> Ahora mismo nuestro programa está dibujando cada vez que puede, pero esto puede ser muy intensivo para el procesador y nos gustaría indicar un límite de “fotogramas” por segundo. Además, necesitaremos el tiempo transcurrido para operaciones que dependan del tiempo, como la rotación.</li>
+  <li><strong>Donde almacenar el dibujo:</strong> Como queremos dibujar un valor distinto por pixel, entonces necesitamos una matriz donde guardar estos datos para mandarlos a dibujar</li>
+</ul>
+
+<h2 id="intervalo-de-tiempo">Intervalo de tiempo</h2>
+
+<p>Ahora necesitamos indicarle al programa qué tan seguido deseamos que se ejecute el programa. Para esto mandaremos a nuestro programa a dormir por una cantidad de tiempo al final de cada iteración. Para esto necesitamos incluir <code class="language-plaintext highlighter-rouge">thread</code> y <code class="language-plaintext highlighter-rouge">chrono</code> . El primero nos da acceso a la función que usaremos para poner a dormir nuestro thread, y el segundo nos permite trabajar con intervalos de tiempo. Esto lo podemos hacer añadiendo los siguientes <strong><em>includes</em></strong> al inicio de nuestro programa:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;chrono&gt;
+#include &lt;thread&gt;
+</span></code></pre></div></div>
+
+<p>Para poner a dormir el hilo actual, (el <strong>main thread</strong>) usaremos la siguiente línea:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">30</span><span class="p">));</span>
+</code></pre></div></div>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">this_thread::sleep_for(X)</code> se usa para poner al <strong><em>main thread</em></strong> a dormir por una cantidad especificada de tiempo</li>
+  <li><code class="language-plaintext highlighter-rouge">chrono::milliseconds(X)</code> representa un intervalo de X milisegundos</li>
+  <li>Escogemos 30 milisegundos para alcanzar la marca de 30 FPS, lo que significa que cada iteración debería durar aproximadamente 0.030 (1/30) segundos o 30 milisegundos. Para simplificar este programa asumiremos que el <em>main loop</em> siempre es instantáneo.</li>
+  <li>Esta línea se añade al final del <strong><em>main loop</em></strong> para garantizar que el programa espere un poco luego de haber impreso el fotograma actual</li>
+</ul>
+
+<p>Más adelante necesitaremos una forma de saber cuanto tiempo ha pasado desde el inicio de la aplicación para poder hacer operaciones que dependan del tiempo.Por esta razón, usaremos una variable que indique el tiempo que ha transcurrido desde el inicio.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Main loop</span>
+<span class="k">auto</span> <span class="n">frame_start</span> <span class="o">=</span> <span class="n">chrono</span><span class="o">::</span><span class="n">high_resolution_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+<span class="kt">float</span> <span class="n">time_passed</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// Calcula la diferencia de tiempo entre el frame anterior y el frame actual, </span>
+        <span class="c1">// y se añade a la variable acumuladora time_pass</span>
+    <span class="k">auto</span> <span class="n">now</span> <span class="o">=</span> <span class="n">chrono</span><span class="o">::</span><span class="n">high_resolution_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+    <span class="k">auto</span> <span class="n">delta_time</span> <span class="o">=</span> <span class="n">chrono</span><span class="o">::</span><span class="n">duration_cast</span><span class="o">&lt;</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="o">&gt;</span><span class="p">(</span><span class="n">now</span> <span class="o">-</span> <span class="n">frame_start</span><span class="p">).</span><span class="n">count</span><span class="p">()</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="n">f</span><span class="p">;</span>
+    <span class="n">time_passed</span> <span class="o">+=</span> <span class="n">delta_time</span><span class="p">;</span>
+    <span class="n">frame_start</span> <span class="o">=</span> <span class="n">now</span><span class="p">;</span>
+    
+        <span class="c1">// ... el resto del main loop</span>
+<span class="p">}</span> 
+</code></pre></div></div>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">frame_start</code> es un objeto que representa un momento en el tiempo. En particular, representa el inicio del frame que está actualmente en curso siendo procesado.</li>
+  <li><code class="language-plaintext highlighter-rouge">time_passed</code> es la cantidad de tiempo que ha transcurrido desde el inicio del programa en <strong>segundos</strong></li>
+  <li>Cuando se inicia el ciclo, guardamos en <code class="language-plaintext highlighter-rouge">now</code> el momento en que entramos en el ciclo, y luego calculamos la diferencia de tiempo que hubo entre <code class="language-plaintext highlighter-rouge">now</code> y la última vez que se inició el ciclo, <code class="language-plaintext highlighter-rouge">frame_start</code> . Esta diferencia se la sumamos al acumulador del tiempo que ha pasado, <code class="language-plaintext highlighter-rouge">time_passed</code>.</li>
+  <li>La línea <code class="language-plaintext highlighter-rouge">chrono::duration_cast&lt;chrono::milliseconds&gt;(now - frame_start).count() / 1000.0f;</code> simplemente está contando la cantidad de milisegundos que hay entre <code class="language-plaintext highlighter-rouge">now</code> y <code class="language-plaintext highlighter-rouge">frame_start</code> , y convirtiendolo a segundos.</li>
+</ul>
+
+<p>De esta forma ahora tendremos la cantidad de tiempo que ha pasado desde el inicio del programa en <code class="language-plaintext highlighter-rouge">time_passed</code> y al final de cada iteración nuestro programa esperará un poco para el siguiente fotograma.</p>
+
+<h2 id="canvas">Canvas</h2>
+
+<p>Ahora mismo estamos imprimiendo el mismo caracter continuamente en la terminal, pero queremos que el caracter <strong>dependa de la posición</strong> en el área donde estamos dibujando. Para esto usaremos una matriz de caracteres de tamaño $R \times R$ donde vamos a almacenar los caracteres que vamos a dibujar en la terminal. Simplemente crearemos una matriz <code class="language-plaintext highlighter-rouge">char canvas[R][R]</code>  que usaremos para dibujar en la terminal:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ... Calculamos el tiempo ...</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+            <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">canvas</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s">" "</span><span class="p">;</span>
+    <span class="c1">// ... Resto del main loop ... </span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>El espacio adicional que se imprime luego del caracter no es necesario, pero personalmente me gusta añadirlo para darle un acabado más limpio a la imagen resultante. Si pruebas el programa tal como está hasta ahora, es posible que veas una matriz de caracteres sin sentido. Esto es normal, y se debe a que, dependiendo de donde hayas declarado la matriz <code class="language-plaintext highlighter-rouge">canvas</code> , es posible que su memoria esté sin inicializar. También puedes añadir una función para limpiar el canvas antes de iniciar, pero de todas formas haremos esto más adelante cuando actualicemos el canvas.</p>
+
+<p>Hasta ahora, deberías tener las siguientes funcionalidades implementadas:</p>
+
+<ol>
+  <li>Se puede imprimir en terminal reemplazando la imagen anterior en lugar de llenando la terminal con muchas repeticiones de la misma imagen</li>
+  <li>Existe un intervalo de tiempo entre cada fotograma: las iteraciones del main loop no se ejecutan de inmediato</li>
+  <li>Tenemos una variable que contiene el tiempo que ha transcurrido desde el inicio del programa y se actualiza en cada iteración.</li>
+  <li>El contenido de los pixeles se guarda en una matriz de tamaño $R$, la resolución escogida, y se imprime desde esta matriz.</li>
+</ol>
+
+<p>Confirma que todo ha ido bien hasta el momento antes de continuar, y empezaremos a trabajar en el dibujo de nuestra <a href="https://en.wikipedia.org/wiki/Torus">dona</a>.</p>
+
+<h1 id="actualización-del-canvas">Actualización del canvas</h1>
+
+<p>Para actualizar el canvas, nuestra primera intuición podría ser iterar pixel por pixel de la matriz de caracteres asignando un caracter a cada uno dependiendo de su posición. Este enfoque sería el que usaríamos usando <strong>Ray Tracing,</strong> pero podemos hacerlo de una forma más sencilla.</p>
+
+<p>Aprovechándonos de la poca resolución de la terminal, nuestra solución será una simplificación del pipeline de computación gráfica. La idea será la siguiente:</p>
+
+<ol>
+  <li>Crearemos todos los <strong>puntos del <a href="https://en.wikipedia.org/wiki/Torus">torus</a></strong>, como los de un modelo 3D.</li>
+  <li>Por cada punto, <strong>lo transformaremos</strong> para que el objeto sea visibile y tenga el aspecto que deseamos en nuestro canvas. Esta etapa corresponde al <strong>Vertex Shader</strong> en el pipeline de computación gráfica</li>
+  <li>Luego de transformarlo, <strong>buscaremos el pixel</strong> donde cae este punto, o mejor dicho su posición en la matriz de canvas. Este paso corresponde al <strong>rasterizado</strong>, pero simplificado para adaptarlo a la poca resolución de la terminal.</li>
+  <li>Luego, usando la dirección de la luz y la normal en ese punto, <strong>escogeremos el caracter</strong> que asignaremos a esa posición de la matriz, coloreando este pixel. Este paso es correspondiente al <strong><em>shading o Fragment Shader</em></strong>.</li>
+</ol>
+
+<p>Antes de empezar, configuraremos la función donde vamos a trabajar. La función <code class="language-plaintext highlighter-rouge">update_canvas</code> se encargará de actualizar el canvas de caracteres en cada iteración del <strong><em>main loop.</em></strong> Como nuestro canvas debe ser accesible para el <strong><em>main,</em></strong> entonces pasaremos esta matriz por referencia a la función de update. Así, la versión inicial queda:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">update_canvas</span><span class="p">(</span><span class="kt">char</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">canvas</span><span class="p">)[</span><span class="n">R</span><span class="p">][</span><span class="n">R</span><span class="p">])</span>
+<span class="p">{</span>
+   <span class="c1">// TODO: Actualizar canvas </span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>El tipo del parámetro <code class="language-plaintext highlighter-rouge">canvas</code> puede verse un poco extraño, pero los paréntesis simplemente indican que el parámetro es una <strong>matriz de caracteres</strong> pasada por referencia, en lugar de un arreglo de referencias a caracteres, lo cual generaría un error de compilación. 
+Es importante pasar este arreglo por referencia porque de lo contrario, el contenido completo del arreglo se copiaría en los argumentos de la función y este puede ser grande. Además el arreglo externo no se modificaría, por lo que se tendría que devolver el arreglo resultante por valor, lo cual implicaría otra copia.</p>
+
+</blockquote>
+
+<p>Añadiremos esta función a nuestro <strong><em>main loop,</em></strong> justo antes de imprimir los caracteres en la terminal.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ... Calculamos el tiempo ...</span>
+    <span class="n">update_canvas</span><span class="p">(</span><span class="n">canvas</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+            <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">canvas</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s">" "</span><span class="p">;</span>
+    <span class="c1">// ... Resto del main loop ... </span>
+<span class="p">}</span> 
+</code></pre></div></div>
+
+<p>Ahora que nuestra función <code class="language-plaintext highlighter-rouge">update_canvas</code> está en su lugar, podemos empezar a implementarla.</p>
+
+<h2 id="generando-vértices">Generando vértices</h2>
+
+<p>Antes de empezar, limpiaremos el canvas asignando el caracter en blanco <code class="language-plaintext highlighter-rouge">' '</code> a cada casilla, de tal forma que esté “en blanco”, esto se debe a que solo asignaremos el color de una casilla si esta corresponde a un punto del toroide.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">update_canvas</span><span class="p">(</span><span class="kt">char</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">canvas</span><span class="p">)[</span><span class="n">R</span><span class="p">][</span><span class="n">R</span><span class="p">])</span>
+<span class="p">{</span>
+    <span class="c1">// Limpiamos el canvas asignando un </span>
+    <span class="c1">// caracter en blanco a cada posición</span>
+   <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+            <span class="n">canvas</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="sc">' '</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>El siguiente paso consiste en <strong>generar los puntos del torus</strong>. Normalmente cargaríamos un modelo desde un archivo, pero el torus es una <strong>figura paramétrica,</strong> así que podemos usar una función para generar los vértices. Usaremos la siguiente función:</p>
+
+\[P(\theta, \phi) = 
+\begin{cases}
+(r_a + r_bcos(\theta)) cos(\phi)\\
+(r_a + r_bcos(\theta)) sin(\phi)\\
+-r_b\ cos(\theta)
+\end{cases} \\ \\
+0\le \theta \le 2 \pi \\
+0\le \phi \le 2 \pi \\\]
+
+<p>Donde:</p>
+
+<ul>
+  <li>$\color{red}{r_a}$ es el radio de la circunferencia del torus</li>
+  <li>$\color{blue}{r_b}$ es el radio del “tubo”, el círculo que se rota para conseguir el torus, que es un sólido en revolución.</li>
+  <li>$\color{blue}\theta, \color{red}\phi$  son ángulos que se usan para parametrizar la figura del torus. El ángulo $ \color{blue} \theta$ indica en qué parte de la circunferencia externa estamos, mientras que el ángulo $ \color{red} \phi$ indica la posición en la circunferencia interna.</li>
+</ul>
+
+<p><img src="/assets/images/torus-cpp/image_2023-06-06_201607213.png" alt="Los parámetros **Ra, Rb**,  corresponden a los radios del círculo y el tubo respectivamente, los ejes son **X**, **Y**, **Z**" /></p>
+
+<p>Los parámetros $\color{red}{R_a}$, $\color{blue}{R_b}$,  corresponden a los radios del círculo y el tubo respectivamente, los ejes son $\color{red}X$, $\color{green}Y$, $\color{blue} Z$</p>
+
+<p><img src="/assets/images/torus-cpp/image_2023-06-07_201159283.png" alt="El ángulo **θ** corresponde al ángulo en la circunferencia del tubo, y el ángulo **Φ** corresponde al ángulo en la circunferencia interna." /></p>
+
+<p>El ángulo $\color{blue}\theta$ corresponde al ángulo en la circunferencia del tubo, y el ángulo $\color{red}\phi$ corresponde al ángulo en la circunferencia interna.</p>
+
+<p>Para representar esta ecuación paramétrica del toroide, usaremos la siguiente función:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">torus_point</span><span class="p">(</span><span class="kt">float</span> <span class="n">theta</span><span class="p">,</span> <span class="kt">float</span> <span class="n">phi</span><span class="p">,</span> <span class="kt">float</span> <span class="n">torus_radius</span><span class="p">,</span> <span class="kt">float</span> <span class="n">tube_radius</span><span class="p">,</span> <span class="kt">float</span> <span class="o">&amp;</span><span class="n">out_x</span><span class="p">,</span> <span class="kt">float</span> <span class="o">&amp;</span><span class="n">out_y</span><span class="p">,</span> <span class="kt">float</span> <span class="o">&amp;</span><span class="n">out_z</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">out_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">torus_radius</span> <span class="o">+</span> <span class="n">tube_radius</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+    <span class="n">out_y</span> <span class="o">=</span> <span class="p">(</span><span class="n">torus_radius</span> <span class="o">+</span> <span class="n">tube_radius</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+    <span class="n">out_z</span> <span class="o">=</span> <span class="o">-</span><span class="n">tube_radius</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>Para usar las funciones <code class="language-plaintext highlighter-rouge">cos</code> y <code class="language-plaintext highlighter-rouge">sin</code> vamos a necesitar incluir <code class="language-plaintext highlighter-rouge">math</code>, con <code class="language-plaintext highlighter-rouge">#include &lt;math&gt;</code>.</p>
+
+<p>Esta función simplemente calcula las tres coordenadas de un punto del torus usando la ecuación que mostramos hace un momento. Notemos que, como devolveremos tres valores, se pasan por referencia las variables donde se almacenan los resultados. Como ejercicio adicional, podría implementar un <code class="language-plaintext highlighter-rouge">struct</code> que represente un punto o vector. En este artículo no lo haremos para limitarnos a usar solo variables, funciones y estructuras de control básicas.</p>
+
+<p>El toroide es una <strong>superficie continua,</strong> lo que significa que tiene infinitos puntos, pero nosotros necesitamos solo algunos.</p>
+
+<p>Como tenemos dos valores que parametrizan los puntos en el toroide, $\color{blue} \theta, \color{red} \phi$, entonces para obtener los vértices necesitamos una secuencia de pares de valores para  $\color{blue} \theta, \color{red} \phi$.  Para escoger estos pares, tal como iteraríamos en una matriz, iteraremos sobre los anillos y vértices por anillo del toroide.</p>
+
+<p>Para saber cuantos pares de valores generaremos, debemos escoger una <strong>resolución.</strong> La resolución nos indica cuantos anillos y vértices por anillos tendremos. Mientras más alta sea la resolución del modelo, mayor calidad tendrá el modelo resultante, pero también ocupará más memoria y tiempo de procesamiento. En nuestro caso, como la terminal tiene muy poca resolución, no necesitamos un modelo muy detallado. Por simplicidad, usaremos la misma resolución para la cantidad de anillos y vértices.</p>
+
+<p><img src="/assets/images/torus-cpp/Untitled.png" alt="Este es un uno de los anillos del toroide, se puede ver como un corte en el tubo. Cada punto corresponde a un vértice en la superficie del toroide. Como la resolución es 8, tenemos 8 vértices por anillo." /></p>
+
+<p>Este es un uno de los anillos del toroide, se puede ver como un corte en el tubo. Cada punto corresponde a un vértice en la superficie del toroide. Como la resolución es 8, tenemos 8 vértices por anillo.</p>
+
+<p>Notemos que como $0 \le {\color{blue}\theta}, {\color{red}\phi} \le 2 \pi$, entonces el ángulo entre cada par de puntos es $2\pi / resolución$.</p>
+
+<p>Finalmente, podemos calcular los puntos con la siguiente función:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">update_canvas</span><span class="p">(</span><span class="kt">char</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">canvas</span><span class="p">)[</span><span class="n">R</span><span class="p">][</span><span class="n">R</span><span class="p">])</span>
+<span class="p">{</span>
+        <span class="c1">// ... Limpiamos el canvas ...</span>
+        <span class="k">const</span> <span class="kt">int</span> <span class="n">TORUS_RESOLUTION</span> <span class="o">=</span> <span class="mi">200</span><span class="p">;</span> <span class="c1">// Escogemos una resolución</span>
+        <span class="c1">// El ángulo entre cada par de anillos o puntos. M_PI viene incluido </span>
+        <span class="c1">// en math</span>
+        <span class="k">const</span> <span class="kt">float</span> <span class="n">step_size</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.</span><span class="n">f</span> <span class="o">*</span> <span class="n">M_PI</span><span class="p">)</span> <span class="o">/</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span>
+    
+        <span class="c1">// Calcula los radios del toroide. En este caso, usaré la resolución del canvas</span>
+        <span class="c1">// para calcular el tamaño del toroide.</span>
+        <span class="k">const</span> <span class="kt">float</span> <span class="n">tube_radius</span> <span class="o">=</span> <span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">R</span><span class="p">)</span> <span class="o">/</span> <span class="mf">4.</span><span class="n">f</span><span class="p">;</span>
+      <span class="k">const</span> <span class="kt">float</span> <span class="n">torus_radius</span> <span class="o">=</span> <span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">R</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="n">f</span><span class="p">;</span>
+    
+      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+      <span class="p">{</span>
+          <span class="k">const</span> <span class="kt">float</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">i</span><span class="p">;</span>
+          <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+          <span class="p">{</span>
+              <span class="k">const</span> <span class="kt">float</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+                        <span class="kt">float</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">;</span> <span class="c1">// coordenadas del punto</span>
+                        <span class="n">torus_point</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span><span class="n">torus_radius</span><span class="p">,</span> <span class="n">tube_radius</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">);</span>
+                        
+                <span class="p">}</span>
+        <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Como mencionamos al principio, usaremos un enfoque orientado a vértices, así que iteraremos por los vértices del modelo en lugar de los pixeles de la imagen. Por esta razón, la mayoría del trabajo que haremos a continuación será en el <em>for loop</em> que acabamos de crear.</p>
+
+<p>En este momento estamos en capacidad de actualizar el canvas y de generar los puntos del toroide, sin embargo seguimos sin ver nada en la terminal. Para resolver esto, añadiremos algo de código temporal que nos permitirá tener mejor feedback de nuestro trabajo.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">update_canvas</span><span class="p">(</span><span class="kt">char</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">canvas</span><span class="p">)[</span><span class="n">R</span><span class="p">][</span><span class="n">R</span><span class="p">])</span>
+<span class="p">{</span>
+    <span class="c1">// ... Limpiamos el canvas ...</span>
+    <span class="c1">// ... Escogemos los radios del torus y su resolución ...</span>
+    
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">const</span> <span class="kt">float</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">i</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="kt">float</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+            <span class="c1">// ... Calculamos la posición x,y,z del vértice actual ...</span>
+            <span class="kt">int</span> <span class="n">x_int</span><span class="p">,</span> <span class="n">y_int</span><span class="p">;</span>
+            <span class="n">x_int</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">x</span><span class="p">;</span>
+            <span class="n">y_int</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">y</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">x_int</span> <span class="o">&amp;&amp;</span> <span class="n">x_int</span> <span class="o">&lt;</span> <span class="n">R</span> <span class="o">&amp;&amp;</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">y_int</span> <span class="o">&amp;&amp;</span> <span class="n">y_int</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">canvas</span><span class="p">[</span><span class="n">y_int</span><span class="p">][</span><span class="n">x_int</span><span class="p">]</span> <span class="o">=</span> <span class="sc">'#'</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>Con este programa, estamos asignando el pixel como <code class="language-plaintext highlighter-rouge">#</code> en caso de que contenga un vértice.</li>
+  <li>Contraintuitivamente, la coordenada <strong>X</strong> se corresponde al segundo índice de la matriz. Esto se debe a que ese índice es el que avanza las posiciones en la matriz horizontalmente. Análogamente, la coordenada Y corresponde al primer índice en la matriz.</li>
+  <li>Esencialmente estamos usando <strong>proyección ortográfica</strong> , puesto que el objeto que veamos no considerará profundidad.</li>
+  <li>Más adelante modificaremos esta función para incluir un coloreado más apropiado y proyección en perspectiva, pero por ahora esto nos servirá para probar.</li>
+  <li>En este programa también podemos ver la relación entre las coordenadas del canvas y el del toroide.</li>
+</ul>
+
+<p>En la siguiente imagen se ilustrala relación entre el canvas y la geometría del toroide. La posición <code class="language-plaintext highlighter-rouge">[0][0]</code> de la matriz corresponde a los puntos en el intervalo $[0,1)\times[0,1)$, la casilla <code class="language-plaintext highlighter-rouge">[0][1]</code> a los puntos en $[0,1)\times[1,2)$, y así sucesibamente. Es decir, el canvas es una ventana que va desde el origen hasta el punto $(R,R)$.</p>
+
+<p><img src="/assets/images/torus-cpp/Untitled%201.png" alt="Untitled" /></p>
+
+<p>Notemos que el eje Y está reflejado hacia abajo en nuestor canvas, dado que los índices de las filas aumentan hacia abajo, mientras que en el plano cartesiano aumentan hacia arriba. Es decir, el eje Y positivo apunta hacia abajo, tal como en <a href="https://godotengine.org/">Godot</a>. Por esta razón, la imagen que verás para este momento será el arco de toroide en el primer cuadrante del plano, pero reflejado respecto al eje X.</p>
+
+<h2 id="transformando-vértices">Transformando vértices</h2>
+
+<p>Ahora, aunque estemos en capacidad de visualizar el toroide en la terminal, es posible que no podamos verlo completo o que esté mal ubicado en la imagen. Por esta razón, a continuación añadiremos funciones de transformación para poder visualizar el toroide.</p>
+
+<p>Añadiremos las siguiente función de traslación:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">translate</span><span class="p">(</span><span class="kt">float</span> <span class="n">offset_x</span><span class="p">,</span> <span class="kt">float</span> <span class="n">offset_y</span><span class="p">,</span> <span class="kt">float</span> <span class="n">offset_z</span><span class="p">,</span> <span class="kt">float</span> <span class="n">x</span><span class="p">,</span> <span class="kt">float</span> <span class="n">y</span><span class="p">,</span> <span class="kt">float</span> <span class="n">z</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_x</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_y</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_z</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">out_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">offset_x</span><span class="p">;</span>
+    <span class="n">out_y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">offset_y</span><span class="p">;</span>
+    <span class="n">out_z</span> <span class="o">=</span> <span class="n">z</span> <span class="o">+</span> <span class="n">offset_z</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Esta función simplemente toma las coordenadas originales y le suma un desplazamiento. Podemos usarla para desplazar los puntos del toroide en el canvas.</p>
+
+<p>También añadiremos la función de escalado, puesto que es posible que el toroide sea demasiado grande para ser visible en el canvas:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">scale</span><span class="p">(</span><span class="kt">float</span> <span class="n">scale</span><span class="p">,</span> <span class="kt">float</span> <span class="n">x</span><span class="p">,</span> <span class="kt">float</span> <span class="n">y</span><span class="p">,</span> <span class="kt">float</span> <span class="n">z</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_x</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_y</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_z</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">out_x</span> <span class="o">=</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>
+    <span class="n">out_y</span> <span class="o">=</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">y</span><span class="p">;</span>
+    <span class="n">out_z</span> <span class="o">=</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">z</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>La función de escalado es útil para fines de pruebas, pero más adelante usaremos la <strong>proyección en perspectiva</strong> para escalar el toroide modificando su distancia a la cámara. Por ahora, escalar nos sirve para visualizar el toroide.</p>
+
+<p>Con el siguiente código justo después de crear los puntos del toroide podremos centrar el toroide en nuestro canvas:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Update Canvas:</span>
+    <span class="c1">// ... Limpiamos el canvas ...</span>
+    <span class="c1">// ... Escogemos los radios del torus y su resolución ...</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+  <span class="p">{</span>
+      <span class="k">const</span> <span class="kt">float</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">i</span><span class="p">;</span>
+      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+      <span class="p">{</span>
+          <span class="k">const</span> <span class="kt">float</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+                    <span class="c1">// ... Calculamos la posición x,y,z del vértice actual ...</span>
+                    <span class="n">scale</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">);</span>
+          <span class="n">translate</span><span class="p">(</span><span class="n">R</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">R</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">);</span>
+                    <span class="c1">// ... Asignamos # a la posición en la matriz que contiene este punto ...</span>
+            <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>Este es un buen momento para intentar experimentar con el toroide. Trata de cambiar los valores de traslación y escalado para ver cómo se modifica la imagen que ves.</p>
+
+<p>Ahora que podemos ver el toroide, podemos empezar a hacer otras transformaciones y tener feedback inmediato. Tal como en <code class="language-plaintext highlighter-rouge">donut.c</code>, nuestro objetivo es tener un toroide rotando, así que ahora implementaremos las rotaciones alrededor de los ejes:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Rotate a point around the X axis</span>
+<span class="kt">void</span> <span class="nf">rotate_x</span><span class="p">(</span><span class="kt">float</span> <span class="n">angle</span><span class="p">,</span> <span class="kt">float</span> <span class="n">x</span><span class="p">,</span> <span class="kt">float</span> <span class="n">y</span><span class="p">,</span> <span class="kt">float</span> <span class="n">z</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_x</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_y</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_z</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">out_x</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+    <span class="n">out_y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span> <span class="o">-</span> <span class="n">z</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">);</span>
+    <span class="n">out_z</span> <span class="o">=</span> <span class="n">y</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span> <span class="o">+</span> <span class="n">z</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// Rotate a point around the Y axis</span>
+<span class="kt">void</span> <span class="nf">rotate_y</span><span class="p">(</span><span class="kt">float</span> <span class="n">angle</span><span class="p">,</span> <span class="kt">float</span> <span class="n">x</span><span class="p">,</span> <span class="kt">float</span> <span class="n">y</span><span class="p">,</span> <span class="kt">float</span> <span class="n">z</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_x</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_y</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_z</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">out_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span> <span class="o">+</span> <span class="n">z</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">);</span>
+    <span class="n">out_y</span> <span class="o">=</span> <span class="n">y</span><span class="p">;</span>
+    <span class="n">out_z</span> <span class="o">=</span> <span class="o">-</span><span class="n">x</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span> <span class="o">+</span> <span class="n">z</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// Rotate a point around the Z axis</span>
+<span class="kt">void</span> <span class="nf">rotate_z</span><span class="p">(</span><span class="kt">float</span> <span class="n">angle</span><span class="p">,</span> <span class="kt">float</span> <span class="n">x</span><span class="p">,</span> <span class="kt">float</span> <span class="n">y</span><span class="p">,</span> <span class="kt">float</span> <span class="n">z</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_x</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_y</span><span class="p">,</span> <span class="kt">float</span><span class="o">&amp;</span> <span class="n">out_z</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">out_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span> <span class="o">+</span> <span class="n">y</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">);</span>
+    <span class="n">out_y</span> <span class="o">=</span> <span class="o">-</span><span class="n">x</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span> <span class="o">+</span> <span class="n">y</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">);</span>
+    <span class="n">out_z</span> <span class="o">=</span> <span class="n">z</span><span class="p">;</span>
+<span class="p">}</span> 
+</code></pre></div></div>
+
+<p>Todas las transformaciones afines sobre un vector (rotación, traslación, escalado) se pueden expresar como una multiplicación de matrices de una matriz de transformación con un vector. Estas funciones de rotación simplemente implementan la multiplicación de matrices manualmente, y las matrices originales son las <strong>matrices de rotación</strong> alrededor de los ejes X, Y y Z. Estas matrices son:</p>
+
+<p><img src="/assets/images/torus-cpp/Untitled%202.png" alt="Cortesía de Wikipedia, puedes ver más sobre estas matrices de rotación en su correspondiente [página](https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations)" /></p>
+
+<p>Cortesía de Wikipedia, puedes ver más sobre estas matrices de rotación en su correspondiente <a href="https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations">página</a></p>
+
+<p>Estas funciones esperan un ángulo como argumento, así que debemos decidir que ángulo usar en cada iteración. Queremos que la diferencia entre ángulos entre cada par de fotogramas sea poca para generar una animación fluida. Aquí es donde usaremos el parámetro <code class="language-plaintext highlighter-rouge">time_passed</code> que calculamos al principio.</p>
+
+<p>Ahora mismo la función de actualización de canvas solo recibe como argumento el canvas donde va a dibujar, pero añadiremos un argumento adicional que será el tiempo pasado en segundos desde el inicio del programa:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">update_canvas</span><span class="p">(</span><span class="kt">char</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">canvas</span><span class="p">)[</span><span class="n">R</span><span class="p">][</span><span class="n">R</span><span class="p">],</span> <span class="kt">float</span> <span class="n">time_passed</span><span class="p">)</span>
+<span class="p">{</span>
+   <span class="c1">// ...Actualización del canvas...</span>
+<span class="p">}</span> 
+</code></pre></div></div>
+
+<p>Y en el <strong>main loop</strong> usaremos la variable <code class="language-plaintext highlighter-rouge">time_passed</code> que calculamos anteriormente:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// main loop</span>
+<span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ... Calculo del tiempo ...</span>
+    <span class="n">update_canvas</span><span class="p">(</span><span class="n">canvas</span><span class="p">,</span> <span class="n">time_passed</span><span class="p">);</span>
+    <span class="c1">// ... Dibujo del canvas ...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Con el parámetro del tiempo transcurrido podremos calcular la rotación del toroide en cada fotograma:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">const</span> <span class="kt">float</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">i</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="kt">float</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+            <span class="c1">// ... Calculamos la posición x,y,z del vértice actual ...</span>
+            <span class="n">rotate_y</span><span class="p">(</span><span class="n">time_passed</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">);</span>
+            <span class="n">rotate_x</span><span class="p">(</span><span class="n">time_passed</span> <span class="o">*</span> <span class="mf">1.13</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">);</span>
+            <span class="n">rotate_z</span><span class="p">(</span><span class="n">time_passed</span> <span class="o">*</span> <span class="mf">1.74</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">);</span>		
+            <span class="c1">// ... Escalamos y trasladamos los puntos del toroide ...</span>
+                    
+            <span class="c1">// ... Asignamos # a la posición en la matriz que contiene este punto ...</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>En este programa, usamos el tiempo transcurrido para calcular el ángulo de rotación alrededor de cada eje.</li>
+  <li>Cada llamada a función multiplica el tiempo transcurrido con un escalar distinto para que cada eje tenga una velocidad de rotación distinta.</li>
+  <li>Es importante <strong>aplicar rotaciones antes de traslaciones</strong>, porque las rotaciones de un objeto trasladado rotan el objeto alrededor del origen, no alrededor del eje del objeto. En los objetos que están en el origen, su eje de rotación coincide con el origen.</li>
+</ul>
+
+<p><img src="/assets/images/torus-cpp/OrdenDeTransformacin.png" alt="OrdenDeTransformación.png" /></p>
+
+<blockquote>
+  <p>📝 <strong>Nota:</strong> En realidad es posible rotar después de trasladar, usando la matriz de rotación que también depende del eje de rotación. Las matrices de rotación que estamos usando asumen que el eje de rotación es está en el origen (cada eje del origen dependiendo de la rotación), y nos quedaremos con ellas por simplicidad.</p>
+</blockquote>
+
+<h2 id="proyección-en-perspectiva">Proyección en perspectiva</h2>
+
+<p>Proyectar es el proceso de transformar una representación geométrica en 3D en una en 2D. En nuestro caso, queremos transformar puntos 3D en una imagen 2D. Naturalmente, proyectar se traduce en conseguir una función para transformar puntos 3D en puntos 2D.</p>
+
+<p>Actualmente estamos usando <strong>proyección ortográfica.</strong> Es decir, convertimos puntos $(x,y,z)$ en puntos $(x’, y’)$ simplemente descartando la coordenada Z:</p>
+
+\[Ortho(x,y,z) = (x,y)\]
+
+<p>Este tipo de projección es la que hemos usado hasta ahora. Es simple y nos facilita visualizar los objetos en 3D. Sin embargo no considera la profundidad, así que los objetos que están lejos se ven del mismo tamaño que si estuvieran cerca. Intuitivamente, esto es una consecuencia de ignorar la coordenada Z, nuestra función de proyección está ignorando la profundidad de los puntos.</p>
+
+<p><img src="/assets/images/torus-cpp/Proyeccin_ortogrfica_(1).png" alt="Proyección ortográfica: Los puntos del cubo se transforman a puntos en el plano simplemente descartando su coordenada Z." /></p>
+
+<p><strong>Proyección ortográfica</strong>: Los puntos del cubo se transforman a puntos en el plano simplemente descartando su coordenada Z.</p>
+
+<p>Ahora buscaremos implementar <strong>proyección en perspectiva,</strong> es un estilo de proyección que considera la profundidad, para que objetos lejanos se vean más pequeños que objetos cercanos a la cámara. La idea será escalar los puntos $(x,y)$ linealmente respecto a su coordenada $z$.  Para esto, consideremos la siguiente imagen:</p>
+
+<p><img src="/assets/images/torus-cpp/Proyeccin_en_perspectiva_(1).png" alt="Proyección en perspectiva (1).png" /></p>
+
+<p>La idea es crear un plano virtual que se encuentra a cierta distancia de la cámara y proyectar los puntos de nuestra geometría 3D en esta superficie 2D. El contenido del plano se dibujará al canvas. Para conseguir esta transformación, vamos a considerar el teorema de proporcionalidad de triángulos, o <a href="https://en.wikipedia.org/wiki/Intercept_theorem">teorema de Thales</a> para determinar la posición $(x’, y’)$ en este plano virtual.</p>
+
+<p>El teorema de Thales nos indica que si intersectamos un triángulo con una recta paralela a uno de sus lados, obtenemos las siguientes relaciones:</p>
+
+<p><img src="/assets/images/torus-cpp/Teorema_de_Thales.png" alt="Teorema de Thales.png" /></p>
+
+\[\textbf{(a)} \frac{|AD|}{|DB|} = \frac{|AE|}{|EC|} \\
+\textbf{(b)} \frac{|AD|}{|AB|} = \frac{|AE|}{|AC|} = \frac{|DE|}{|BC|}\]
+
+<p>En este ejemplo, la recta $\color{blue}{DE}$ es paralela al lado $BC$, y los puntos de intersección generan estas relaciones. Como veremos más adelante, la más útil será la segunda relación, ya que nos permite relacionar la longitud de la recta intersección $\color{blue}{DE}$ con las longitudes de  de los segmentos intersectados por la recta.</p>
+
+<p>Ahora veamos más detalladamente la definición de nuestro plano virtual para identificar donde usar el teorema de Thales:</p>
+
+<p><img src="/assets/images/torus-cpp/Proyeccin_en_Perspectiva_lateral_(1).png" alt="Proyección en Perspectiva lateral (1).png" /></p>
+
+<p>En esta imagen estamos viendo una perspectiva lateral de la cámara. Y asumiendo que se encuentra en el origen, podemos identificar los siguientes valores:</p>
+
+<ol>
+  <li>$z’$ Es la distancia desde la cámara hasta el plano virtual, este es un valor que podemos definir manualmente.</li>
+  <li>$y’$ es el valor que estamos buscando para la proyección del punto $(x,y,z)$ en el plano virtual.</li>
+  <li>$y,z$ son valores reales del punto que queremos proyectar, ambos son valores conocidos.</li>
+</ol>
+
+<p>Usando la parte <strong>(b)</strong> del teorema de Thales, podemos derivar la siguiente relación:</p>
+
+\[\frac{z}{z'} = \frac{y}{y'}\]
+
+<p>Y como solo desconocemos el valor de $y’$, entonces podemos despejarlo de la ecuación:</p>
+
+\[y' = \frac{y z'}{z}\]
+
+<p>Análogamente, podemos usar la misma lógica para conseguir el valor de $x’$:</p>
+
+\[x'=\frac{xz'}{z}\]
+
+<p>Para conseguir este valor podemos considerar la proyección en el plano $XZ$ en lugar del plano $YZ$ que usamos en la última imagen. Esta proyección corresponde a una vista de arriba hacia abajo de la cámara.</p>
+
+<p>Finalmente, nuestra función de proyección en perspectiva se reduce a:</p>
+
+\[Perspective(x,y,z) = (\frac{xz'}{z}, \frac{yz'}{z})\]
+
+<p>Donde:</p>
+
+<ol>
+  <li>Como mencionamos anteriormente, $z’$ es una constante positiva, la distancia de la cámara al plano virtual, y podemos fijarla como nos sea conveniente.</li>
+  <li>Como la cámara se encuentra en el origen, entonces mientras mayor sea $z$, entonces más pequeños se vuelven los valores de $x,y$. Es decir, los objetos que se encuentren más alejados de la cámara, se ven más pequeños.</li>
+  <li>Como asumimos que la cámara está en el origen, entonces z debe ser positivo para ser visible. Más aun, debe ser mayor a la distancia de la cámara $z’$.</li>
+</ol>
+
+<p>Ahora, llevando nuestra teoría recién adquirida a nuestro programa, volveremos a la función de actualización de canvas, específicamente a la parte donde proyectamos los puntos 3D a puntos 2D:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">// Update Canvas:</span>
+    <span class="c1">// ... Limpiamos el canvas ...</span>
+    <span class="c1">// ... Escogemos los radios del torus y su resolución ...</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">const</span> <span class="kt">float</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">i</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="kt">float</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+            <span class="c1">// ... Calculamos la posición x,y,z del vértice actual ...</span>
+            <span class="c1">// ... Calculamos rotaciones, traslaciones y escalado de este punto ...</span>
+            <span class="kt">int</span> <span class="n">x_int</span><span class="p">,</span> <span class="n">y_int</span><span class="p">;</span>
+            <span class="c1">// Reemplazamos la proyección ortográfica....</span>
+            <span class="c1">// x_int = (int) x;</span>
+            <span class="c1">// y_int = (int) y;</span>
+            <span class="c1">// Por la proyección en perspectiva:</span>
+            <span class="n">x_int</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">CAM_DISTANCE_TO_SCREEN</span> <span class="o">*</span> <span class="n">x</span> <span class="o">/</span> <span class="n">z</span><span class="p">);</span>
+            <span class="n">y_int</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">CAM_DISTANCE_TO_SCREEN</span> <span class="o">*</span> <span class="n">y</span> <span class="o">/</span> <span class="n">z</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">x_int</span> <span class="o">&amp;&amp;</span> <span class="n">x_int</span> <span class="o">&lt;</span> <span class="n">R</span> <span class="o">&amp;&amp;</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">y_int</span> <span class="o">&amp;&amp;</span> <span class="n">y_int</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">canvas</span><span class="p">[</span><span class="n">y_int</span><span class="p">][</span><span class="n">x_int</span><span class="p">]</span> <span class="o">=</span> <span class="sc">'#'</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">CAM_DISTANCE_TO_SCREEN</code> Es un <code class="language-plaintext highlighter-rouge">float</code> constante que representa $z’$ en nuestra ecuación anterior. Puedes definirla en cualquier parte del programa mientras sea alcanzable para este punto.  En mi caso, usaré el valor de <strong>20.0.</strong></li>
+  <li>Ahora que el tamaño del toroide depende de su distancia de la cámara, podemos eliminar el escalado que usábamos anteriormente, la línea <code class="language-plaintext highlighter-rouge">scale(0.5, x,y,z, x,y,z);</code></li>
+  <li>Como ahora usamos una forma distinta de proyectar las imagen en pantalla, las traslaciones que hemos hecho para posicionar el toroide pueden no ser las más apropiadas. Modifica las traslaciones que hemos usado para ubicar el toroide en el centro de la pantalla.</li>
+  <li>Ahora que usamos proyección en perspectiva, experimenta alejando el toroide aumentando su traslación en la coordenada Z, verás que ahora su tamaño disminuye mientras más lejos esté en el eje Z.</li>
+</ul>
+
+<p>Ahora que tenemos proyección en perspectiva, las partes más lejanas del toroide deberían verse más pequeñas que las más cercanas a la cámara. Para este punto solo necesitamos colorear el toroide para que cada punto de su superficie tenga un color distinto dependiendo de su ángulo respecto a la luz.</p>
+
+<h2 id="shading">Shading</h2>
+
+<p>El shading es simplemente escoger un color por cada pixel de la imagen. Como no usaremos colores reales, sino caracteres ascii, en nuestro caso el problema se reduce a conseguir el caracter correcto para cada “pixel”. Usaremos caracteres más densos segun la “claridad” del color en cada punto. Los caracteres que usaremos, ordenados de menor a mayor claridad, son los siguientes:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>.,-~:;=!*#$@
+</code></pre></div></div>
+
+<p>Para definir la claridad de cada punto, usaremos una regla muy simple. Vamos a escoger una dirección de luz, y dependiendo de qué tan opuesta sea la normal en cada punto de la superficie a esta dirección, consideraremos que este punto es más claro.</p>
+
+<p><img src="/assets/images/torus-cpp/Shading.png" alt="Shading.png" /></p>
+
+<p>Para esto usaremos el <strong>producto interno</strong>, entre la dirección de la luz y el vector normal de la superficie. Como sabemos, el producto interno es una función que recibe dos vectores y calcula un valor escalar. Cuando los vectores están <strong>normalizados,</strong> entonces el escalar está en el rango $[-1,1]$, donde -1 indica que son anti paralelos (son el mismo vector con direcciones opuestas) y 1 indica que son paralelos (son el mismo vector, incluyendo la dirección), y 0 indica que son perpendiculares.</p>
+
+<p><img src="/assets/images/torus-cpp/ProductoInterno.png" alt="Ejemplos de producto punto. a y b son perpendiculares, así que su producto punto es 0. a y c son antiparalelos, así que su producto punto es -1, y c es paralelo a sí mismo, por lo que el producto consigo mismo es 1. Además, todos los vectores entre c y b multiplicados con a producen valores negativos, y todos los vectores entre c y b multiplicados con c producen valores positivos." /></p>
+
+<p><strong>Ejemplos de producto punto</strong>. $\color{red}a$ y $\color{green}b$ son perpendiculares, así que su producto punto es 0. $\color{red}a$ y $\color{blue}c$ son antiparalelos, así que su producto punto es -1, y $\color{blue}c$ es paralelo a sí mismo, por lo que el producto consigo mismo es 1. Además, todos los vectores entre $\color{blue}c$ y $\color{green}b$ multiplicados con a producen valores negativos, y todos los vectores entre $\color{blue}c$ y $\color{green}b$ multiplicados con $\color{blue}c$ producen valores positivos.</p>
+
+<p>Ahora que tenemos una idea para colorear nuestros pixeles con caracteres, necesitamos un plan para hacerla realidad. Los pasos son los siguientes:</p>
+
+<ol>
+  <li>Crearemos una función para calcular la normal en cada punto de la superficie del toroide.</li>
+  <li>Crearemos una función para calcular el producto punto entre dos vectores</li>
+  <li>Añadiremos unas variables para las coordenadas de un vector de dirección de la luz.</li>
+  <li>Transformaremos el vector normal para que sea consistente con las transformaciones de nuestro toroide.</li>
+  <li>Escogeremos un caracter distinto dependiendo de la magnitud del producto punto entre la dirección de la luz y la dirección de la normal en cada punto</li>
+</ol>
+
+<p>Adicionalmente, un problema que no hemos resuelto hasta ahora es el <strong>orden de dibujado.</strong> Hasta ahora, estamos dibujando cada punto independientemente de si tiene otro punto más cerca de la cámara. Para esto usaremos <strong>z buffering.</strong> Crearemos una matriz del mismo tamaño del canvas, que llamaremos <strong>z buffer,</strong> que tendrá la distancia del punto más cercano dibujado en cada posición del canvas. Si el nuevo punto que vamos a dibujar está más lejos que el punto actual en el z buffer, entonces lo ignoraremos.</p>
+
+<p>Con nuestro plan trazado, procederemos a implementarlo. Empezaremos creando la función para <strong>calcular la normal del toroide.</strong></p>
+
+<p>Para empezar, notaremos que el toroide es un <a href="https://en.wikipedia.org/wiki/Solid_of_revolution">sólido en revolución</a>, es una circunferencia trasladada cierta distancia del origen y rotada alrededor de un eje. Sabemos que la normal en un punto de una circunferencia es paralela al vector entre dicho punto y el centro de la circunferencia:</p>
+
+<p><img src="/assets/images/torus-cpp/NormalCircunferencia.png" alt="NormalCircunferencia.png" /></p>
+
+<p>Como vemos en este caso, la circunferencia de centro $C$ tiene normal $\color{gray}{n}$ en el punto $\color{blue} P$, y además $\color{gray}{n}$ es paralelo al vector $C\color{blue} P$. Podemos extrapolar esta misma lógica al toroide notando que cada anillo del toroide es una circunferencia. El punto en la superficie del toroide es un punto de la circunferencia que ya sabemos como calcular, así que solo necesitamos el punto en centro del anillo para calcular el vector normal a la superficie.</p>
+
+<p>Si recordamos la geometría del toroide, notamos que podemos calcular el punto en el centro del tubo como un toroide de radio 0:</p>
+
+<p><img src="/assets/images/torus-cpp/image_2023-06-06_201607213.png" alt="Los parámetros **Ra, Rb**,  corresponden a los radios del círculo y el tubo respectivamente, los ejes son **X**, **Y**, **Z**" /></p>
+
+<p>En este ejemplo, si hacemos $\color{blue}{R_b} = 0$, entonces el punto obtenido estará siempre en el origen. De esta forma, podemos escribir la siguiente función:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">torus_normal</span><span class="p">(</span><span class="kt">float</span> <span class="n">theta</span><span class="p">,</span> <span class="kt">float</span> <span class="n">phi</span><span class="p">,</span> <span class="kt">float</span> <span class="n">torus_radius</span><span class="p">,</span> <span class="kt">float</span> <span class="n">tube_radius</span><span class="p">,</span> <span class="kt">float</span> <span class="o">&amp;</span><span class="n">out_x</span><span class="p">,</span> <span class="kt">float</span> <span class="o">&amp;</span><span class="n">out_y</span><span class="p">,</span> <span class="kt">float</span> <span class="o">&amp;</span><span class="n">out_z</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">float</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">p_y</span><span class="p">,</span> <span class="n">p_z</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">c_x</span><span class="p">,</span> <span class="n">c_y</span><span class="p">,</span> <span class="n">c_z</span><span class="p">;</span>
+
+    <span class="c1">// Calculamos el punto en la superficie</span>
+    <span class="n">torus_point</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">torus_radius</span><span class="p">,</span> <span class="n">tube_radius</span><span class="p">,</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">p_y</span><span class="p">,</span> <span class="n">p_z</span><span class="p">);</span>
+
+    <span class="c1">// Calculamos el punto en el centro, es la misma función con un tubo de radio 0</span>
+    <span class="n">torus_point</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">torus_radius</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">c_x</span><span class="p">,</span> <span class="n">c_y</span><span class="p">,</span> <span class="n">c_z</span><span class="p">);</span>
+
+    <span class="c1">// Calculamos el vector normal como la diferencia entre el centro y el punto </span>
+    <span class="c1">// de superficie:</span>
+    <span class="n">out_x</span> <span class="o">=</span> <span class="n">p_x</span> <span class="o">-</span> <span class="n">c_x</span><span class="p">;</span>
+    <span class="n">out_y</span> <span class="o">=</span> <span class="n">p_y</span> <span class="o">-</span> <span class="n">c_y</span><span class="p">;</span>
+    <span class="n">out_z</span> <span class="o">=</span> <span class="n">p_z</span> <span class="o">-</span> <span class="n">c_z</span><span class="p">;</span>
+
+    <span class="c1">// Normalizamos el vector normal. </span>
+    <span class="n">out_x</span> <span class="o">=</span> <span class="n">out_x</span> <span class="o">/</span> <span class="n">tube_radius</span><span class="p">;</span>
+    <span class="n">out_y</span> <span class="o">=</span> <span class="n">out_y</span> <span class="o">/</span> <span class="n">tube_radius</span><span class="p">;</span>
+    <span class="n">out_z</span> <span class="o">=</span> <span class="n">out_z</span> <span class="o">/</span> <span class="n">tube_radius</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>En esta función, calculamos el punto el la superficie usando la función de punto en toroide que definimos anteriormente.</li>
+  <li>Luego, usamos esta misma función con radio de tubo 0 para obtener el punto en el centro.</li>
+  <li>Calculamos el vector normal como la diferencia entre estos dos vectores.</li>
+  <li>Finalmente, como sabemos que la longitud de este vector es igual al radio del tubo, podemos normalizar este vector usando el radio del tubo como magnitud.</li>
+</ul>
+
+<p>Con esta función podremos calcular la normal en cualquier punto de la superficie usando los mismos parámetros que necesitamos para calcular el punto.</p>
+
+<p>Ahora definiremos la función para calcular el producto punto entre dos vectores, esta función es muy simple y es la siguiente:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">float</span> <span class="nf">dot</span><span class="p">(</span><span class="kt">float</span> <span class="n">x1</span><span class="p">,</span> <span class="kt">float</span> <span class="n">y1</span><span class="p">,</span> <span class="kt">float</span> <span class="n">z1</span><span class="p">,</span> <span class="kt">float</span> <span class="n">x2</span><span class="p">,</span> <span class="kt">float</span> <span class="n">y2</span><span class="p">,</span> <span class="kt">float</span> <span class="n">z2</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">+</span> <span class="n">y1</span> <span class="o">*</span> <span class="n">y2</span> <span class="o">+</span> <span class="n">z1</span> <span class="o">*</span> <span class="n">z2</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>A continuación, definiremos las siguientes variables en la función de actualización de canvas para las coordenadas de la dirección de la luz:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">float</span> <span class="n">LIGHT_DIR_X</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">LIGHT_DIR_Y</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">LIGHT_DIR_Z</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">magnitude</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">LIGHT_DIR_X</span> <span class="o">*</span> <span class="n">LIGHT_DIR_X</span> <span class="o">+</span> <span class="n">LIGHT_DIR_Y</span> <span class="o">*</span> <span class="n">LIGHT_DIR_Y</span> <span class="o">+</span> <span class="n">LIGHT_DIR_Z</span> <span class="o">*</span> <span class="n">LIGHT_DIR_Y</span><span class="p">);</span>
+    <span class="n">LIGHT_DIR_X</span> <span class="o">=</span> <span class="n">LIGHT_DIR_X</span> <span class="o">/</span> <span class="n">magnitude</span><span class="p">;</span>
+    <span class="n">LIGHT_DIR_Y</span> <span class="o">=</span> <span class="n">LIGHT_DIR_Y</span> <span class="o">/</span> <span class="n">magnitude</span><span class="p">;</span>
+    <span class="n">LIGHT_DIR_Z</span> <span class="o">=</span> <span class="n">LIGHT_DIR_Z</span> <span class="o">/</span> <span class="n">magnitude</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>Con estas variables definimos la dirección de la luz, está sobre el eje $y$ y apunta hacia abajo y hacia el frente. Notemos que es <strong>importante normalizar este vector</strong> para que nuestros próximos cálculos sean correctos.</p>
+
+<p>Antes de usar el vector normal, debemos transformarlo para que sea consistente con las transformaciones que hemos aplicado al toroide.</p>
+
+<p>La matemática necesaria para transformar vectores normales se escapa un poco del alcance de este artículo, pero por ahora basta con saber que en este caso solo será necesario aplicar las mismas rotaciones que se aplicaron al punto en el mismo orden:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Update Canvas:</span>
+    <span class="c1">// ... Limpiamos el canvas ...</span>
+    <span class="c1">// ... Escogemos los radios del torus y su resolución ...</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">const</span> <span class="kt">float</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">i</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="kt">float</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+            <span class="c1">// ... Calculamos la posición x,y,z del vértice actual ...</span>
+            <span class="c1">// ... Calculamos rotaciones, traslaciones y escalado de este punto ...</span>
+            <span class="kt">float</span> <span class="n">n_x</span><span class="p">,</span> <span class="n">n_y</span><span class="p">,</span> <span class="n">n_z</span><span class="p">;</span> 
+            <span class="n">torus_normal</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span><span class="n">torus_radius</span><span class="p">,</span> <span class="n">tube_radius</span><span class="p">,</span> <span class="n">n_x</span><span class="p">,</span> <span class="n">n_y</span><span class="p">,</span> <span class="n">n_z</span><span class="p">);</span>
+            <span class="n">rotate_y</span><span class="p">(</span><span class="n">time_passed</span><span class="p">,</span> <span class="n">n_x</span><span class="p">,</span><span class="n">n_y</span><span class="p">,</span><span class="n">n_z</span><span class="p">,</span> <span class="n">n_x</span><span class="p">,</span><span class="n">n_y</span><span class="p">,</span><span class="n">n_z</span><span class="p">);</span>
+            <span class="n">rotate_x</span><span class="p">(</span><span class="n">time_passed</span> <span class="o">*</span> <span class="mf">1.13</span><span class="p">,</span> <span class="n">n_x</span><span class="p">,</span><span class="n">n_y</span><span class="p">,</span><span class="n">n_z</span><span class="p">,</span> <span class="n">n_x</span><span class="p">,</span><span class="n">n_y</span><span class="p">,</span><span class="n">n_z</span><span class="p">);</span>
+            <span class="n">rotate_z</span><span class="p">(</span><span class="n">time_passed</span> <span class="o">*</span> <span class="mf">1.74</span><span class="p">,</span> <span class="n">n_x</span><span class="p">,</span><span class="n">n_y</span><span class="p">,</span><span class="n">n_z</span><span class="p">,</span> <span class="n">n_x</span><span class="p">,</span><span class="n">n_y</span><span class="p">,</span><span class="n">n_z</span><span class="p">);</span>
+            <span class="c1">// ... Proyectamos el punto y asignamos # a su posición en el canvas ...</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>Finalmente, vamos a asignar el color correcto a cada pixel:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Update Canvas:</span>
+    <span class="c1">// ... Limpiamos el canvas ...</span>
+    <span class="c1">// ... Escogemos los radios del torus y su resolución ...</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">const</span> <span class="kt">float</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">i</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="kt">float</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+            <span class="c1">// ... Calculamos la posición x,y,z del vértice actual ...</span>
+            <span class="c1">// ... Calculamos rotaciones, traslaciones y escalado de este punto ...</span>
+            <span class="c1">// ... Transformaciones de la normal ...</span>
+            <span class="c1">// ... Proyectamos el punto y asignamos # a su posición en el canvas ...</span>
+            <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">x_int</span> <span class="o">&amp;&amp;</span> <span class="n">x_int</span> <span class="o">&lt;</span> <span class="n">R</span> <span class="o">&amp;&amp;</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">y_int</span> <span class="o">&amp;&amp;</span> <span class="n">y_int</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">char</span> <span class="k">const</span> <span class="n">SHADES</span><span class="p">[]</span> <span class="o">=</span> <span class="s">".,-~:;=!*#$@"</span><span class="p">;</span>
+                <span class="kt">float</span> <span class="n">normal_dot_light</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">n_x</span><span class="p">,</span><span class="n">n_y</span><span class="p">,</span><span class="n">n_z</span><span class="p">,</span> <span class="n">LIGHT_DIR_X</span><span class="p">,</span> <span class="n">LIGHT_DIR_Y</span><span class="p">,</span> <span class="n">LIGHT_DIR_Z</span><span class="p">);</span>
+                
+                <span class="c1">// Sanity check</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">normal_dot_light</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="n">f</span><span class="p">)</span>
+                    <span class="n">normal_dot_light</span> <span class="o">=</span> <span class="mf">1.0</span><span class="n">f</span><span class="p">;</span>
+
+                <span class="c1">// Reemplazamos esta línea ...</span>
+                <span class="c1">// canvas[y_int][x_int] = '#';</span>
+                <span class="c1">// Con esta asignación condicional:</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">normal_dot_light</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="n">canvas</span><span class="p">[</span><span class="n">y_int</span><span class="p">][</span><span class="n">x_int</span><span class="p">]</span> <span class="o">=</span> <span class="sc">' '</span><span class="p">;</span>
+                <span class="k">else</span> 
+                    <span class="n">canvas</span><span class="p">[</span><span class="n">y_int</span><span class="p">][</span><span class="n">x_int</span><span class="p">]</span> <span class="o">=</span> <span class="n">SHADES</span><span class="p">[(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">abs</span><span class="p">(</span><span class="n">normal_dot_light</span><span class="p">)</span> <span class="o">*</span> <span class="mi">12</span><span class="p">)];</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li>En este código estamos definiendo un arreglo de caracteres ordenados de “menos claro” a “más claro”.</li>
+  <li>Calculamos el producto punto entre la normal y la luz</li>
+  <li>Nos aseguramos de que el valor del producto punto sea el correcto</li>
+  <li>Si el producto punto es mayor o igual que 0, significa que la normal es “paralela” a la luz y por lo tanto es un punto de la superficie que no mira hacia la luz. De lo contrario, está de cara hacia la luz y la refleja con mayor intensidad.</li>
+</ul>
+
+<p>Para este punto es posible que la imagen que veas no tenga los colores correctos, esto se debe a que no estamos revisando si estamos dibujando sobre un pixel que ya es el más cercano a la pantalla. Para esto usaremos el <strong>z buffer.</strong> Es una matriz del mismo tamaño del canvas donde almacenaremos la componente z del punto correspondiente a cada pixel. Solo dibujaremos puntos si el pixel que le corresponde está vacío o tiene un punto que esté más atrás.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Update Canvas:</span>
+    <span class="c1">// ... Limpiamos el canvas ...</span>
+    <span class="c1">// ... Escogemos los radios del torus y su resolución ...</span>
+    <span class="kt">float</span> <span class="n">depth_buffer</span><span class="p">[</span><span class="n">R</span><span class="p">][</span><span class="n">R</span><span class="p">];</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">R</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+            <span class="n">depth_buffer</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1000000</span><span class="p">;</span>
+    <span class="c1">// ... Procesamiento de cada punto del toroide ...</span>
+</code></pre></div></div>
+
+<ul>
+  <li>En esta sección estamos creando un z buffer (o <strong><em>depth buffer</em></strong>) del mismo tamaño del canvas</li>
+  <li>Lo inicializamos valores lo bastante altos para que cualquier punto esté más adelante que el valor inicial.</li>
+</ul>
+
+<p>Finalmente, para usar el z buffer, simplemente revisamos que el punto actual esté más adelante que el último que haya sido dibujado en la misma posición, y si lo está, actualizamos el z buffer:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Update Canvas:</span>
+    <span class="c1">// ... Limpiamos el canvas ...</span>
+    <span class="c1">// ... Escogemos los radios del torus y su resolución ...</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">const</span> <span class="kt">float</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">i</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">TORUS_RESOLUTION</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="kt">float</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+            <span class="c1">// ... Calculamos la posición x,y,z del vértice actual ...</span>
+            <span class="c1">// ... Calculamos rotaciones, traslaciones y escalado de este punto ...</span>
+            <span class="c1">// ... Transformaciones de la normal ...</span>
+            <span class="c1">// ... Proyectamos el punto y asignamos # a su posición en el canvas ...</span>
+            <span class="c1">// Añadimos otro término a la condición del if:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">x_int</span> <span class="o">&amp;&amp;</span> <span class="n">x_int</span> <span class="o">&lt;</span> <span class="n">R</span> <span class="o">&amp;&amp;</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">y_int</span> <span class="o">&amp;&amp;</span> <span class="n">y_int</span> <span class="o">&lt;</span> <span class="n">R</span> <span class="o">&amp;&amp;</span> <span class="n">depth_buffer</span><span class="p">[</span><span class="n">y_int</span><span class="p">][</span><span class="n">x_int</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">z</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">depth_buffer</span><span class="p">[</span><span class="n">y_int</span><span class="p">][</span><span class="n">x_int</span><span class="p">]</span> <span class="o">=</span> <span class="n">z</span><span class="p">;</span>
+                <span class="c1">// ... Selección del color para este pixel ...</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>Y con esto hemos terminado nuestro programa. Este fue un viaje largo, pero en el camino aprendimos las bases de computación gráfica, y logramos implementar el renderizado de una figura geométria en 3D usando solo estructuras de control básicas. Con este programa como base es fácil extender la teoría para entender el renderizado con APIs gráficas, como OpenGL.</p>
+
+<p>Con un poco más de trabajo es posible extender este esquema sencillo para hacer estilos de render más complejos. Podrías añadir un parser de modelos 3D para leer los puntos de la superficie junto con sus normales para crear un render de terminal que sirva para cualquier tipo de geometría 3D en lugar de solo con toroides. Yendo un poco más lejos, podríamos mapear colores en RGB a algunos colores en códigos ANSI y usar las UVs para hacer un renderizado sencillo con colores. Incluso podríamos convertirlo en un <em>Ray Tracer</em> recursivo cambiando el enfoque <em>por-punto</em> por un enfoque <em>por-pixel</em>, ¡el cielo es el límite!</p>
+
+<p>El código resultante de este artículo se puede encontrar en el siguiente enlace en GitHub:</p>
+
+<p><a href="https://github.com/LDiazN/torus.cpp">GitHub - LDiazN/torus.cpp: A simple torus render in terminal inspired by donut.c</a></p>
+
+<p><img src="/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif" alt="Toroide que gira en una terminal, usando arte ASCII" /></p>
+:ET

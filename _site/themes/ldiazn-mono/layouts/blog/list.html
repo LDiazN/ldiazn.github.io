@@ -1,0 +1,24 @@
+{{ define "title" }}Blog | {{ .Site.Title }}{{ end }}
+
+{{ define "main" }}
+{{ partial "header_table.html" (dict "ctx" . "Title" "Blog") }}
+
+{{ .Content }}
+
+{{ $posts := where (where .Pages "Draft" false) "Params.language" "en" }}
+{{ if $posts }}
+  <ul>
+    {{ range $posts }}
+      <li>
+        <strong><a href="{{ .Permalink }}">{{ .Title }}</a></strong>
+        <span class="meta"> {{ .Date.Format .Site.Params.date_format }}</span>
+        {{ if .Description }}<br><small>{{ .Description }}</small>{{ else }}<br><small>{{ .Summary | plainify | truncate 120 }}</small>{{ end }}
+      </li>
+    {{ end }}
+  </ul>
+{{ else }}
+  <small>No entries for now!</small>
+{{ end }}
+
+{{ partial "footer.html" . }}
+{{ end }}

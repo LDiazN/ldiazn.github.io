@@ -1,0 +1,10 @@
+{{ if .Site.Params.show_navbar }}
+  {{ with .Site.Data.home.navbar_entries }}
+    <ul class="nav-list">
+      {{ range . }}
+        <li><a href="{{ if hasPrefix .url "http" }}{{ .url }}{{ else }}{{ if hasPrefix .url "/" }}{{ .url }}{{ else }}/{{ .url }}{{ end }}{{ end }}">{{ .title }}</a></li>
+      {{ end }}
+    </ul>
+    <hr>
+  {{ end }}
+{{ end }}

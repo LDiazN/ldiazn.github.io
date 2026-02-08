@@ -1,0 +1,33 @@
+{{ $item := .item }}
+{{ $external := .external | default false }}
+<table class="card-table">
+  {{ if $item.img }}
+  <tr>
+    <td colspan="2" class="card-table-img">
+      <a href="{{ $item.url }}" {{ if $external }}target="_blank" rel="noopener"{{ end }}>
+        <img src="{{ $item.img }}" alt="{{ $item.img_alt | default $item.title }}">
+      </a>
+    </td>
+  </tr>
+  {{ end }}
+  <tr>
+    <td colspan="2" class="card-table-title">
+      <h3><a href="{{ $item.url }}" {{ if $external }}target="_blank" rel="noopener"{{ end }}>{{ $item.title }}</a></h3>
+    </td>
+  </tr>
+  {{ with $item.tags }}
+  <tr>
+    <td class="width-min">tags</td>
+    <td class="width-auto">{{ range . }}<mark>{{ . }}</mark> {{ end }}</td>
+  </tr>
+  {{ end }}
+  <tr>
+    <td colspan="2">{{ $item.desc | safeHTML }}</td>
+  </tr>
+  {{ with $item.date }}
+  <tr>
+    <td class="width-min">date</td>
+    <td class="width-auto">{{ . }}</td>
+  </tr>
+  {{ end }}
+</table>
