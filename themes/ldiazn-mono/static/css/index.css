@@ -14,12 +14,12 @@
   --text-color-alt: #94a3b8;
   --background-color: #0f0f12;
   --background-color-alt: #18181c;
-  /* Neon palette – green (primary accent), orange (highlight), muted */
-  --neon-green: #22c55e;
-  --neon-green-dim: #15803d;
+  /* Neon palette – lime/yellow-green (primary), orange (highlight) */
+  --neon-green: #94fc03;
+  --neon-green-dim: #6b9c00;
   --neon-orange: #fb923c;
   --neon-orange-dim: #ea580c;
-  --neon-muted: #4ade80;
+  --neon-muted: #b8ff2e;
   --font-weight-normal: 500;
   --font-weight-medium: 600;
   --font-weight-bold: 800;
@@ -42,11 +42,11 @@
     --text-color-alt: #475569;
     --background-color: #fff;
     --background-color-alt: #f8fafc;
-    --neon-green: #16a34a;
-    --neon-green-dim: #15803d;
+    --neon-green: #65a30d;
+    --neon-green-dim: #4d7c0a;
     --neon-orange: #ea580c;
     --neon-orange-dim: #c2410c;
-    --neon-muted: #22c55e;
+    --neon-muted: #84cc16;
   }
   mark {
     background: rgba(251, 146, 60, 0.15);
