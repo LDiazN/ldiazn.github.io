@@ -1,0 +1,26 @@
+{{ $page := .page }}
+{{ $truncate := .truncate | default 0 }}
+{{ $thumb := $page.Params.thumbnail }}
+{{ $thumbURL := cond (and $thumb (hasPrefix (printf "%s" $thumb) "/")) ($thumb | relURL) $thumb }}
+{{ $desc := cond (ne (default "" $page.Description) "") ($page.Description) ($page.Summary | plainify) }}
+<tr class="blog-entry-row-first">
+  <td rowspan="3" class="blog-entry-img">
+    <div class="blog-entry-img-wrap">
+      {{ if $thumb }}
+        <a href="{{ $page.Permalink }}"><img src="{{ $thumbURL }}" alt="" /></a>
+      {{ end }}
+    </div>
+  </td>
+  <td colspan="2" class="blog-entry-title">
+    <h3><a href="{{ $page.Permalink }}">{{ $page.Title }}</a></h3>
+  </td>
+</tr>
+<tr>
+  <td colspan="2" class="blog-entry-desc">
+    {{ if and $truncate (gt $truncate 0) }}{{ $desc | truncate $truncate "…" }}{{ else }}{{ $desc }}{{ end }}
+  </td>
+</tr>
+<tr class="blog-entry-row-last">
+  <td class="width-min">date</td>
+  <td class="width-auto blog-entry-date-value">{{ $page.Date.Format ($page.Site.Params.date_format | default "2006-01-02") }}</td>
+</tr>

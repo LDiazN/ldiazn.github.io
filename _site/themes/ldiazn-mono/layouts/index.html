@@ -31,15 +31,11 @@
   {{ $posts := where (where $blog.Pages "Draft" false) "Params.language" "en" }}
   {{ $posts = $posts | first (.Site.Params.home.n_blogs | default 3) }}
   {{ if $posts }}
-    <ul>
+    <table class="blog-list-table">
       {{ range $posts }}
-        <li>
-          <strong><a href="{{ .Permalink }}">{{ .Title }}</a></strong>
-          <span class="meta"> {{ .Date.Format .Site.Params.date_format }}</span>
-          {{ if .Description }}<br><small>{{ .Description }}</small>{{ else }}<br><small>{{ .Summary | plainify | truncate 120 }}</small>{{ end }}
-        </li>
+        {{ partial "blog_entry_table.html" (dict "page" . "truncate" 120) }}
       {{ end }}
-    </ul>
+    </table>
     <small><a href="{{ "blog/" | relURL }}">More entries!</a></small>
   {{ else }}
     <small>No entries for now!</small>
