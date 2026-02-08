@@ -9,17 +9,18 @@
   --font-family: "JetBrains Mono", monospace;
   --line-height: 1.20rem;
   --border-thickness: 2px;
-  /* Dark theme */
-  --text-color: #e8e8e8;
-  --text-color-alt: #94a3b8;
-  --background-color: #0f0f12;
+  /* Dark theme – softer white for comfortable reading */
+  --text-color: #c4c8cc;
+  --text-color-alt: #8b92a0;
+  --background-color:  #13101b;
   --background-color-alt: #18181c;
   /* Neon palette – lime/yellow-green (primary), orange (highlight) */
-  --neon-green: #94fc03;
-  --neon-green-dim: #6b9c00;
+  --neon-green: #7dd605;
+  --neon-green-dim: #5c9c00;
   --neon-orange: #fb923c;
   --neon-orange-dim: #ea580c;
-  --neon-muted: #b8ff2e;
+  --neon-muted: #9ee635;
+  --color-bold: #ee4c67;
   --font-weight-normal: 500;
   --font-weight-medium: 600;
   --font-weight-bold: 800;
@@ -42,11 +43,12 @@
     --text-color-alt: #475569;
     --background-color: #fff;
     --background-color-alt: #f8fafc;
-    --neon-green: #65a30d;
-    --neon-green-dim: #4d7c0a;
+    --neon-green: #5c8a0d;
+    --neon-green-dim: #4a7010;
     --neon-orange: #ea580c;
     --neon-orange-dim: #c2410c;
-    --neon-muted: #84cc16;
+    --neon-muted: #6b9c15;
+    --color-bold: #c41e3a;
   }
   mark {
     background: rgba(251, 146, 60, 0.15);
@@ -145,8 +147,9 @@ p {
   margin-bottom: var(--line-height);
 }
 
-strong {
+strong, b {
   font-weight: var(--font-weight-bold);
+  color: var(--color-bold);
 }
 em {
   font-style: italic;
