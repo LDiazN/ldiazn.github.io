@@ -10,7 +10,7 @@ theme = "ldiazn-mono"
 [params]
   subtitle = "Software engineer"
   github_url = "https://github.com/ldiazn"
-  linkedin_url = "https://www.linkedin.com/in/ldiazn"
+  linkedin_url = "https://www.linkedin.com/in/ldiazn-cs"
   description = "Hi! My name is Luis Diaz, I'm a Computer Engineer and I'm passionate about science, technology, video games, visual arts and software engineering. I work professionally as a software developer and I'm also interested in Game Technology, Computer Graphics, and 3D animation. Sometimes I also enjoy writing about things I do and find interesting. Visit my blog to learn more about my interests and explore my projects to see what I enjoy working on!"
   show_navbar = true
   show_footer = true
