@@ -88,6 +88,7 @@ body {
   max-width: calc(min(80ch, round(down, 100%, 1ch)));
   line-height: var(--line-height);
   overflow-x: hidden;
+  text-align: justify;
 }
 
 @media screen and (max-width: 480px) {
@@ -150,6 +151,7 @@ a:link, a:visited {
 
 p {
   margin-bottom: var(--line-height);
+  text-indent: 2ch;
 }
 
 strong, b {
