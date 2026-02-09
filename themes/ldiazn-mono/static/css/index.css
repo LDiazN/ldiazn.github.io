@@ -204,6 +204,7 @@ th {
   font-weight: var(--font-weight-heading);
   text-transform: uppercase;
   color: var(--neon-orange);
+  text-indent: 0;
 }
 .header tr td:last-child {
   text-align: right;
