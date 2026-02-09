@@ -32,6 +32,8 @@
   --blog-list-title-padding: 0.75rem;
   /* Blog list: padding inside the date row (top and bottom) for all entries */
   --blog-list-date-row-padding: calc(0.25rem);
+  /* Subtle background behind images (tied to text color feel) */
+  --img-bg: rgba(177, 192, 207, 0.216);
 
   font-family: var(--font-family);
   font-optical-sizing: auto;
@@ -47,6 +49,7 @@
     --text-color-alt: #475569;
     --background-color: #fff;
     --background-color-alt: #f8fafc;
+    --img-bg: rgba(15, 23, 42, 0.05);
     --neon-green: #5c8a0d;
     --neon-green-dim: #4a7010;
     --neon-orange: #ea580c;
@@ -304,6 +307,8 @@ img, video {
 img {
   font-style: italic;
   color: var(--text-color-alt);
+  background-color: var(--img-bg);
+  padding: 0.25rem;
 }
 
 pre {
