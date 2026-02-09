@@ -210,6 +210,9 @@ th {
 .header-nav-row td.header-nav-cell {
   text-align: left;
 }
+.header-nav-row td.header-nav-cell:last-child {
+  text-align: left;
+}
 .header-nav-cell--active,
 .header-nav-cell--active a {
   background: var(--neon-green) !important;
