@@ -27,14 +27,14 @@
     </tr>
     {{ if $ctx.Site.Params.show_navbar }}
       {{ with $navEntries }}
+        {{ $navLen := len . }}
         <tr class="header-nav-row">
-          {{ range . }}
-            {{ $href := cond (hasPrefix .url "http") .url (cond (hasPrefix .url "/") .url (printf "/%s" .url)) }}
+          {{ range $i, $e := . }}
+            {{ $href := cond (hasPrefix $e.url "http") $e.url (cond (hasPrefix $e.url "/") $e.url (printf "/%s" $e.url)) }}
             {{ $hrefSegment := strings.TrimPrefix "/" $href }}
             {{ $isCurrent := or (and (eq $href "/") $ctx.IsHome) (and (ne $href "/") (not (hasPrefix $href "http")) (or (hasPrefix $ctx.RelPermalink $href) (eq $ctx.Section $hrefSegment) (eq (strings.TrimSuffix $ctx.RelPermalink "/") $href))) }}
-            <td class="header-nav-cell{{ if $isCurrent }} header-nav-cell--active{{ end }}"><a href="{{ $href }}">{{ .title }}</a></td>
+            <td class="header-nav-cell{{ if $isCurrent }} header-nav-cell--active{{ end }}"{{ if eq (add $i 1) $navLen }} colspan="2"{{ end }}><a href="{{ $href }}">{{ $e.title }}</a></td>
           {{ end }}
-          <td class="header-icons-spacer"></td>
         </tr>
       {{ end }}
     {{ end }}
