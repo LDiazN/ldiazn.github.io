@@ -24,9 +24,9 @@
   /* Inline code (single-backtick): dark orange bg, light orange text */
   --code-bg: #7c2c1256;
   --code-color: #d3a069;
-  --font-weight-normal: 500;
-  --font-weight-medium: 600;
-  --font-weight-bold: 800;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
   /* Blog list: padding around the title row of each entry */
   --blog-list-title-padding: 0.75rem;
   /* Blog list: padding inside the date row (top and bottom) for all entries */
