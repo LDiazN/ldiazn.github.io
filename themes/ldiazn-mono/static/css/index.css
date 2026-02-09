@@ -27,6 +27,7 @@
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 700;
+  --font-weight-heading: 800;
   /* Blog list: padding around the title row of each entry */
   --blog-list-title-padding: 0.75rem;
   /* Blog list: padding inside the date row (top and bottom) for all entries */
@@ -101,7 +102,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-heading);
   margin: calc(var(--line-height) * 2) 0 var(--line-height);
   line-height: var(--line-height);
 }
@@ -191,6 +192,7 @@ th {
 }
 .header h1 {
   margin: 0;
+  font-weight: var(--font-weight-heading);
 }
 .header .header-title {
   text-align: left;
@@ -199,6 +201,7 @@ th {
   margin: 0;
   margin-top: 0.25em;
   font-size: 1rem;
+  font-weight: var(--font-weight-heading);
   text-transform: uppercase;
   color: var(--neon-orange);
 }
@@ -270,6 +273,7 @@ th {
 .page-title {
   margin: var(--line-height) 0 var(--line-height);
   font-size: 1.25rem;
+  font-weight: var(--font-weight-heading);
   text-transform: uppercase;
 }
 
