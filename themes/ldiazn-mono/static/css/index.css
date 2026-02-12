@@ -348,6 +348,42 @@ footer {
   opacity: 1;
 }
 
+.scroll-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3rem;
+  height: 3rem;
+  background: var(--neon-green);
+  color: var(--background-color);
+  border: var(--border-thickness) solid var(--neon-green);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.2s ease, background-color 0.2s ease;
+  z-index: 1000;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.scroll-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+}
+.scroll-to-top:hover,
+.scroll-to-top:focus {
+  background: var(--neon-green-dim);
+  border-color: var(--neon-green-dim);
+  transform: scale(1.1);
+  outline: none;
+}
+.scroll-to-top svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
 .width-min {
   width: 0%;
   white-space: nowrap;
