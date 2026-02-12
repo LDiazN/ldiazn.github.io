@@ -326,6 +326,28 @@ th {
   vertical-align: baseline;
 }
 
+footer {
+  margin-top: calc(var(--line-height) * 2);
+}
+.footer-credit {
+  color: var(--text-color-alt);
+  opacity: 0.6;
+  font-size: 0.875rem;
+  margin-top: var(--line-height);
+  text-indent: 0;
+  text-align: center;
+}
+.footer-credit a {
+  color: var(--text-color-alt);
+  opacity: 0.6;
+  text-decoration: underline;
+}
+.footer-credit a:hover,
+.footer-credit a:focus {
+  color: var(--neon-green);
+  opacity: 1;
+}
+
 .width-min {
   width: 0%;
   white-space: nowrap;
