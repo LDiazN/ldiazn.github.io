@@ -4,38 +4,42 @@
 {{ end }}
 {{ if $page }}
   {{ $currentLang := $page.Params.language | default "en" }}
-  {{ $hasEsVersion := $page.Params.es_version }}
-  {{ $hasEnVersion := $page.Params.en_version }}
-  
-  {{ if or $hasEsVersion $hasEnVersion }}
-    <div class="language-links">
-      {{ if and (eq $currentLang "en") $hasEsVersion }}
-        {{ $blogSection := $page.Site.GetPage "/blog" }}
-        {{ $altPage := false }}
-        {{ range $blogSection.Pages }}
-          {{ if and (eq .Title $page.Title) (eq (.Params.language | default "en") "es") }}
-            {{ $altPage = . }}
-          {{ end }}
-        {{ end }}
-        {{ if $altPage }}
-          <a href="{{ $altPage.Permalink }}" class="language-link" title="Versión en español">
-            <span class="flag-icon">🇪🇸</span>
-          </a>
-        {{ end }}
-      {{ else if and (eq $currentLang "es") $hasEnVersion }}
-        {{ $blogSection := $page.Site.GetPage "/blog" }}
-        {{ $altPage := false }}
-        {{ range $blogSection.Pages }}
-          {{ if and (eq .Title $page.Title) (eq (.Params.language | default "en") "en") }}
-            {{ $altPage = . }}
-          {{ end }}
-        {{ end }}
-        {{ if $altPage }}
-          <a href="{{ $altPage.Permalink }}" class="language-link" title="English version">
-            <span class="flag-icon">🇬🇧</span>
-          </a>
-        {{ end }}
+  {{ $blogSection := $page.Site.GetPage "/blog" }}
+  {{ $enPage := false }}
+  {{ $esPage := false }}
+  {{ range $blogSection.Pages }}
+    {{ if eq .Title $page.Title }}
+      {{ $pageLang := .Params.language | default "en" }}
+      {{ if eq $pageLang "en" }}
+        {{ $enPage = . }}
+      {{ else if eq $pageLang "es" }}
+        {{ $esPage = . }}
       {{ end }}
-    </div>
+    {{ end }}
   {{ end }}
+  
+  <div class="language-links">
+    {{ if $enPage }}
+      {{ if eq $currentLang "en" }}
+        <span class="language-link language-link-current" title="English (current)">
+          <span class="flag-icon">🇬🇧</span>
+        </span>
+      {{ else }}
+        <a href="{{ $enPage.Permalink }}" class="language-link language-link-alt" title="English version">
+          <span class="flag-icon">🇬🇧</span>
+        </a>
+      {{ end }}
+    {{ end }}
+    {{ if $esPage }}
+      {{ if eq $currentLang "es" }}
+        <span class="language-link language-link-current" title="Español (actual)">
+          <span class="flag-icon">🇪🇸</span>
+        </span>
+      {{ else }}
+        <a href="{{ $esPage.Permalink }}" class="language-link language-link-alt" title="Versión en español">
+          <span class="flag-icon">🇪🇸</span>
+        </a>
+      {{ end }}
+    {{ end }}
+  </div>
 {{ end }}

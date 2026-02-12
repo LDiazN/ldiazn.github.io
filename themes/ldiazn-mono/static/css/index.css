@@ -287,20 +287,43 @@ th {
 .language-links {
   margin-top: calc(var(--line-height) * 0.5);
   margin-bottom: var(--line-height);
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
 }
 .language-link {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
-  transition: transform 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  vertical-align: baseline;
 }
-.language-link:hover,
-.language-link:focus {
+.language-link-current {
+  cursor: default;
+}
+.language-link-current .flag-icon {
+  font-size: 2rem;
+  opacity: 1;
+  filter: none;
+  line-height: 1;
+}
+.language-link-alt {
+  opacity: 0.5;
+}
+.language-link-alt:hover,
+.language-link-alt:focus {
+  opacity: 0.8;
   transform: scale(1.1);
+}
+.language-link-alt .flag-icon {
+  font-size: 1.5rem;
+  line-height: 1;
 }
 .flag-icon {
   font-size: 1.5rem;
   line-height: 1;
   display: inline-block;
+  vertical-align: baseline;
 }
 
 .width-min {
