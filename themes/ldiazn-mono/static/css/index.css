@@ -280,9 +280,27 @@ th {
 /* Page title – first content below the header, on every page */
 .page-title {
   margin: var(--line-height) 0 var(--line-height);
-  font-size: 1.25rem;
+  font-size: 2rem;
   font-weight: var(--font-weight-heading);
   text-transform: uppercase;
+}
+.language-links {
+  margin-top: calc(var(--line-height) * 0.5);
+  margin-bottom: var(--line-height);
+}
+.language-link {
+  display: inline-block;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+.language-link:hover,
+.language-link:focus {
+  transform: scale(1.1);
+}
+.flag-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  display: inline-block;
 }
 
 .width-min {

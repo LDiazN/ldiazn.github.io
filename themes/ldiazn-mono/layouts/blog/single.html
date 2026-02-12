@@ -2,7 +2,7 @@
 
 {{ define "main" }}
 {{ partial "header_table.html" (dict "ctx" .) }}
-{{ partial "page_title.html" (dict "Title" .Title) }}
+{{ partial "page_title.html" (dict "Title" .Title "Page" .) }}
 
 {{ .Content }}
 
