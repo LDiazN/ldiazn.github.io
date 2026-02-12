@@ -484,11 +484,11 @@ ul.nav-list li {
   min-width: 120px;
   padding: 0 !important;
   vertical-align: middle;
-  background: #fff;
+  background: var(--img-bg);
 }
 .blog-entry-img-wrap {
   padding: calc(var(--line-height) / 2);
-  background: #fff;
+  background: var(--img-bg);
 }
 .blog-entry-img img {
   display: block;
