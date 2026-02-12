@@ -7,7 +7,7 @@
 
 :root {
   --font-family: "JetBrains Mono", monospace;
-  --line-height: 1.20rem;
+  --line-height: 1.5rem;
   --border-thickness: 2px;
   /* Dark theme – softer white for comfortable reading */
   --text-color: #c4c8cc;
