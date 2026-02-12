@@ -18,28 +18,23 @@
     {{ end }}
   {{ end }}
   
-  <div class="language-links">
-    {{ if $enPage }}
+  {{ if and $enPage $esPage }}
+    <div class="language-links">
       {{ if eq $currentLang "en" }}
         <span class="language-link language-link-current" title="English (current)">
           <span class="flag-icon">🇬🇧</span>
         </span>
+        <a href="{{ $esPage.Permalink }}" class="language-link language-link-alt" title="Versión en español">
+          <span class="flag-icon">🇪🇸</span>
+        </a>
       {{ else }}
         <a href="{{ $enPage.Permalink }}" class="language-link language-link-alt" title="English version">
           <span class="flag-icon">🇬🇧</span>
         </a>
-      {{ end }}
-    {{ end }}
-    {{ if $esPage }}
-      {{ if eq $currentLang "es" }}
         <span class="language-link language-link-current" title="Español (actual)">
           <span class="flag-icon">🇪🇸</span>
         </span>
-      {{ else }}
-        <a href="{{ $esPage.Permalink }}" class="language-link language-link-alt" title="Versión en español">
-          <span class="flag-icon">🇪🇸</span>
-        </a>
       {{ end }}
-    {{ end }}
-  </div>
+    </div>
+  {{ end }}
 {{ end }}
