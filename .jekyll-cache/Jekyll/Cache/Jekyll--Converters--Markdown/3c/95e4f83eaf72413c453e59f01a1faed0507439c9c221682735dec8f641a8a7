@@ -1,2 +1,0 @@
-I"<p>In this article, I’ll share how we structured and implemented the Render API, and how the render thread integrates into proto-ecs’s architecture and entity system. We use a dedicated render thread, PODs to simplify resource management and double buffering.</p>
-:ET
