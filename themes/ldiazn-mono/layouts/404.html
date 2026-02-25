@@ -1,0 +1,10 @@
+{{ define "title" }}404 | {{ .Site.Title }}{{ end }}
+
+{{ define "main" }}
+{{ partial "header_table.html" (dict "ctx" .) }}
+{{ partial "page_title.html" (dict "Title" "404") }}
+
+<p><strong>Page not found</strong></p>
+<p>The requested page could not be found.</p>
+<p><a href="{{ "" | absURL }}">Home</a></p>
+{{ end }}

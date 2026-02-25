@@ -1,0 +1,199 @@
+I"E9<p><img src="/assets/images/proto-ecs/proto-ecs-first-render.gif" alt="The first 3D object we loaded and rendered. The version in this gif is using phong shading for debugging" /></p>
+
+<p>proto-ecs is a game engine I’m developing with a friend to learn more about engine programming. It’s written in Rust, and the main feature is an entity system that allows trivial parallelism of gameplay code. While that part is well-advanced, we lacked a way to visualize the game!. Narutally, the next step was to build the rendering system, or at least lay its foundation.</p>
+
+<p>You can find more details about proto-ecs <a href="">here</a>.</p>
+
+<p>As with many game engine enthusiasts, building the render system was one of the most exciting milestones. After countless lines of code, we finally have a basic render system capable of displaying 3D models on screen!</p>
+
+<p>In this article, I’ll share how we structured and implemented the Render API, and how the render thread integrates into proto-ecs’s architecture.</p>
+
+<p>The low-level API design is heavily influenced by <a href="https://www.youtube.com/watch?v=m3bW8d4Brec">this talk from Sebastian Aaltonen</a> and the general render architecture is inspired by <a href="https://blog.mecheye.net/2023/09/how-to-write-a-renderer-for-modern-apis/">this article</a>.</p>
+
+<h2 id="api-structure">API Structure</h2>
+
+<p>For the render API, we aimed for:</p>
+
+<ol>
+  <li><strong>No leaking</strong> of platform-specific details into the render code.</li>
+  <li><strong>Easy implementation</strong> of new rendering APIs, especially  for maintainment.</li>
+  <li><strong>Good ergonomics</strong> for writing rendering code.</li>
+  <li><strong>Parallel execution</strong>, allowing the simulation to run independently while the renderer draws a frame.</li>
+</ol>
+
+<p>Following Sebastian’s principles, we designed a multi-layered structure:</p>
+
+<ol>
+  <li><strong>Low Level</strong>:
+    <ul>
+      <li>
+        <p>A <strong>thin abstraction</strong> over graphics APIs (e.g., OpenGL, Vulkan, Metal).</p>
+      </li>
+      <li>
+        <p>Avoids unnecessary abstraction while preventing platform-specific code from leaking into higher layers.</p>
+      </li>
+      <li>
+        <p>To support a new API, you <em>just</em> have to implement the <code class="language-plaintext highlighter-rouge">RenderAPIBackend</code> trait.</p>
+      </li>
+      <li>
+        <p>Operates with index/vertex buffers and shaders.</p>
+      </li>
+    </ul>
+  </li>
+  <li><strong>Mid Level</strong>:
+    <ul>
+      <li>
+        <p>Builds on the Low Level layer.</p>
+      </li>
+      <li>
+        <p>Manages models, materials, lights, and cameras.</p>
+      </li>
+      <li>
+        <p>Abstracts rendering details, agnostic of the underlying API.</p>
+      </li>
+    </ul>
+  </li>
+  <li><strong>High Level</strong>:
+    <ul>
+      <li>
+        <p>User-facing systems like UI rendering, animations, and particles.</p>
+      </li>
+      <li>
+        <p>Not yet implemented, but planned as the next phase.</p>
+      </li>
+    </ul>
+  </li>
+</ol>
+
+<p><img src="/assets/images/proto-ecs/render-api/RenderAPIStructure.png" alt="Render API Structure" /></p>
+
+<p>Currently, the engine only supports OpenGL, and we are using <a href="https://en.wikipedia.org/wiki/Phong_shading">Phong Shading</a> with fixed parameters to test this structure (hence the white-purple tint of this model). The next step will be implementing PBR.</p>
+
+<p><img src="/assets/images/proto-ecs/proto-ecs-first-render.gif" alt="The first 3D object we loaded and rendered. The version in this gif is using phong shading for debugging" /></p>
+
+<h2 id="entity-system">Entity system</h2>
+
+<p>Integrating rendering into our entity system was surprisingly straightforward using datagroups, local systems, and global systems.</p>
+
+<p>A <strong>datagroup</strong> is a collection of entity-related data. Similar to Unity components, but without update functions 
+or lifecycle logic. A <strong>global system</strong> is an object processing multiple entities based on specific datagroups, 
+specified as dependencies.</p>
+
+<blockquote>
+  <p>More about <strong>Datagroups, Global Systems, and Local Systems</strong> <a href="">here</a></p>
+</blockquote>
+
+<p>We introduced a new global system: <code class="language-plaintext highlighter-rouge">RenderGS</code>, and a new datagroup: <code class="language-plaintext highlighter-rouge">MeshRenderer</code>.</p>
+
+<p>To display an entity in scene, users add a <code class="language-plaintext highlighter-rouge">MeshRenderer</code> datagroup, which requieres a <code class="language-plaintext highlighter-rouge">Transform</code> datagroup
+to define position, scale and orientation. The <code class="language-plaintext highlighter-rouge">MeshRenderer</code>  specifies models and materials, while the <code class="language-plaintext highlighter-rouge">RenderGS </code> 
+global system collects scene data (e.g., lights, cameras, models) at the end of each frame to pass to the render thread.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">MeshRenderer</code> allows entities to specify a list of models and materials. 
+Then the <code class="language-plaintext highlighter-rouge">RenderGS</code> global system will run at the end of each frame to collect all information in the scene needed to render a frame and it will send it to the <strong>Render Thread</strong>. 
+This information includes lights, cameras, transforms, models, and materials. 
+We use <strong>double buffering</strong>, so the render thread will always draw the previous frame, 
+while the simulation is a frame ahead.</p>
+
+<p>We also use <strong>double buffering</strong>: the render thread draws the previous frame while the simulation stays a frame ahead.</p>
+
+<h2 id="render-thread">Render Thread</h2>
+
+<p>While the main thread runs the simulation and updates the entity system, the render thread draws the previous frame in parallel. Communication between threads happens via <strong>shared memory</strong>.</p>
+
+<p>We use a <code class="language-plaintext highlighter-rouge">RenderThreadSharedStorage</code> struct to hold all the information shared with the main thread, 
+separating the memory internally used by the render thread. For now, it looks like this:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">pub</span> <span class="k">struct</span> <span class="n">RenderSharedStorage</span> <span class="p">{</span>
+    <span class="n">last_frame_finished</span><span class="p">:</span> <span class="n">AtomicBool</span><span class="p">,</span>
+    <span class="n">running</span><span class="p">:</span> <span class="n">AtomicBool</span><span class="p">,</span>
+    <span class="n">started</span><span class="p">:</span> <span class="n">AtomicBool</span><span class="p">,</span>
+
+    <span class="c">/// Description of the next frame.</span>
+    <span class="n">frame_desc</span><span class="p">:</span> <span class="n">RwLock</span><span class="o">&lt;</span><span class="n">FrameDesc</span><span class="o">&gt;</span><span class="p">,</span>
+
+    <span class="c">/// Store shaders by name, for easier retrieval</span>
+    <span class="n">name_to_shaders</span><span class="p">:</span> <span class="n">RwLock</span><span class="o">&lt;</span><span class="n">HashMap</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span> <span class="n">ShaderHandle</span><span class="o">&gt;&gt;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Instead of locking the entire struct, each field can be accessed independently using atomics and <code class="language-plaintext highlighter-rouge">RwLock</code>.
+It contains some metadata about the current state of the render thread and, 
+<code class="language-plaintext highlighter-rouge">frame_sec</code>, the information required to render a frame. 
+It’s updated by the main thread before being consumed by the render thread.</p>
+
+<p>Both the main thread and the render thread have a <strong>sync point</strong> where they operate this data. At the end of each frame, the main thread will lock the <code class="language-plaintext highlighter-rouge">frame_desc</code> variable and update the frame description with the information collected from the entity system. Then, when the render thread is finished with the previous frame, it will also lock the <code class="language-plaintext highlighter-rouge">frame_desc</code> variable and move its content to its internal memory, to free the lock as soon as possible.</p>
+
+<p><img src="/assets/images/proto-ecs/render-api/RenderAPI-ThreadCommunication.png" alt="Thread communication by shared memory" /></p>
+
+<p>What happens when the main thread already finished a new frame, but the render thread is not finished with the previous one? There are multiple approaches to this problem:</p>
+
+<ol>
+  <li><strong>Skip frame</strong>: Replace the undrawn frame with the next frame. This approach is very easy to implement and
+it makes a bit of sense. It’s already too late to draw the frame in the buffer, so we replace it with a new one. 
+It can cause issues when the render thread slows down because if it happens too many times in a row, the next drawn 
+frame will have a wildly different state to the previous one, causing a bad experience for the user.</li>
+  <li><strong>Wait for the render thread to finish</strong>: Pause the simulation until the render frame is finished. 
+This approach can cause stutter, but at the least the state won’t change significantly  between frames.</li>
+</ol>
+
+<p>There are probably more and more sophisticated approaches to this problem, but for now these are the most direct ones.
+Currently, we’re using the <strong>Skip Frame</strong> approach for its simplicity.</p>
+
+<h2 id="resource-lifetime-and-allocation">Resource lifetime and allocation</h2>
+
+<p>A key part of this design is how resources are managed. 
+Usually, the creation of a resource like a shader, 
+a material, or a model would be implemented with RAII: you create a new instance using a constructor, 
+and the destructor would clean up all of its resources when the object is no longer needed. 
+The problem is that the engine programmer would have little control over the control flow of these destructions. 
+And it’s worse if a destructor can cause side effects outside the destroyed object, 
+which is very likely if you use some sort of bookkeeping system. 
+And what if the modified memory is in another thread? Pure chaos!</p>
+
+<p>Let’s take a look at how the <code class="language-plaintext highlighter-rouge">FrameDesc</code> struct is defined:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">pub</span> <span class="k">struct</span> <span class="n">FrameDesc</span> <span class="p">{</span>
+    <span class="k">pub</span> <span class="n">render_proxies</span><span class="p">:</span> <span class="nb">Vec</span><span class="o">&lt;</span><span class="n">RenderProxy</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="k">pub</span> <span class="n">camera</span><span class="p">:</span> <span class="n">Camera</span><span class="p">,</span> 
+    <span class="c">// Lights not yet implemented :(</span>
+<span class="p">}</span>
+
+<span class="k">pub</span> <span class="k">struct</span> <span class="n">RenderProxy</span> <span class="p">{</span>
+    <span class="k">pub</span> <span class="n">model</span><span class="p">:</span> <span class="n">ModelHandle</span><span class="p">,</span>
+    <span class="k">pub</span> <span class="n">material</span><span class="p">:</span> <span class="n">MaterialHandle</span><span class="p">,</span>
+    <span class="k">pub</span> <span class="n">transform</span><span class="p">:</span> <span class="nn">macaw</span><span class="p">::</span><span class="n">Affine3A</span><span class="p">,</span>
+    <span class="k">pub</span> <span class="n">position</span><span class="p">:</span> <span class="nn">macaw</span><span class="p">::</span><span class="n">Vec3</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">FrameDesc</code> describes a frame’s state, by specifying the camera, lights (coming soon), and objects to draw.</li>
+  <li><code class="language-plaintext highlighter-rouge">RenderProxy</code> is a description of an object from the perspective of the render. Since it doesn’t care about entities, 
+the information in this struct is very simple, it’s just the model, material, and transformation of an object.</li>
+</ul>
+
+<p>All macaw types are just structs of floats. The handles are all very similar to <a href="/proto-ecs-memory-allocation-en">the ones described in this post</a>,
+just an index and a generation number, both of type <code class="language-plaintext highlighter-rouge">u32</code>. This means that
+copying a <code class="language-plaintext highlighter-rouge">RenderProxy</code> instance is just <code class="language-plaintext highlighter-rouge">memcpy</code>, you don’t have to call destructors or move resources. 
+We can just assign new <code class="language-plaintext highlighter-rouge">RenderProxy</code> instances to the array without the overhead!</p>
+
+<p>But if the thing passed are just handles and not the actual object or pointer to the object, then where’s the actual memory 
+located? We decided that all resources related to rendering belong to the render. Once the resources are loaded they are managed by the render, and resource destruction is a <strong>request</strong> to the render thread, and it will be fulfilled eventually, but not immediately.</p>
+
+<p>The engine will only use the handles and the actual data will be managed by the render thread, which is the primary user of this data anyway.</p>
+
+<p>We still need a better way to handle resource loading, but that will be a matter for another day. For now,
+we just want to have a foundation system for the render.</p>
+
+<h2 id="conclusions">Conclusions</h2>
+
+<p>Our API design is very simple and useful, allowing us to easily create new render API backends without leaking 
+platform-specific details too high into the abstraction stack. It plays nicely with multi-threading thanks to the
+heavy use of PODs to send data to the render thread. It’s also very simple to glue to the entity system
+thanks to our global system design.</p>
+
+<p>There’s still a lot of work to do regarding the render, but this is a nice and simple foundation structure 
+to build upon.</p>
+
+:ET

@@ -1,0 +1,30 @@
+{{ $ctx := .ctx }}
+{{ $description := .Description }}
+{{ $navEntries := $ctx.Site.Data.home.navbar_entries }}
+{{ $navCount := 1 }}
+{{ if and $ctx.Site.Params.show_navbar $navEntries }}{{ $navCount = len $navEntries }}{{ end }}
+<header>
+  <table class="header">
+    <tr>
+      <td colspan="{{ $navCount }}" class="header-title">
+        <h1>{{ $ctx.Site.Title }}</h1>
+        {{ if $ctx.Site.Params.subtitle }}<p class="header-subtitle">{{ $ctx.Site.Params.subtitle }}</p>{{ end }}
+      </td>
+    </tr>
+    {{ if $ctx.Site.Params.show_navbar }}
+      {{ with $navEntries }}
+        <tr class="header-nav-row">
+          {{ range . }}
+            {{ $href := cond (hasPrefix .url "http") .url (cond (hasPrefix .url "/") .url (printf "/%s" .url)) }}
+            {{ $hrefSegment := strings.TrimPrefix "/" $href }}
+            {{ $isCurrent := or (and (eq $href "/") $ctx.IsHome) (and (ne $href "/") (not (hasPrefix $href "http")) (or (hasPrefix $ctx.RelPermalink $href) (eq $ctx.Section $hrefSegment) (eq (strings.TrimSuffix $ctx.RelPermalink "/") $href))) }}
+            <td class="header-nav-cell{{ if $isCurrent }} header-nav-cell--active{{ end }}"><a href="{{ $href }}">{{ .title }}</a></td>
+          {{ end }}
+        </tr>
+      {{ end }}
+    {{ end }}
+    {{ with $description }}
+      <tr><td colspan="2">{{ . | safeHTML }}</td></tr>
+    {{ end }}
+  </table>
+</header>

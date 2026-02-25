@@ -1,0 +1,13 @@
+{{ if .Site.Params.show_footer }}
+  <hr>
+  <footer>
+    {{ with .Site.Data.home.footer_entries }}
+      <ul class="nav-list">
+        {{ range . }}
+          <li><a href="{{ if hasPrefix .url "http" }}{{ .url }}{{ else }}{{ if hasPrefix .url "/" }}{{ .url }}{{ else }}/{{ .url }}{{ end }}{{ end }}">{{ .title }}</a></li>
+        {{ end }}
+      </ul>
+    {{ end }}
+    <p class="footer-credit">Theme heavily based on the <a href="https://owickstrom.github.io/the-monospace-web/">monospace web</a>, by Oskar Wickström</p>
+  </footer>
+{{ end }}
