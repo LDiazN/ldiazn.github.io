@@ -1,5 +1,12 @@
-_site
-.sass-cache
-.jekyll-cache
-.jekyll-metadata
-vendor
+# Hugo
+/public/
+/resources/
+.hugo_build.lock
+
+# Optional: generated when using buildStats (e.g. CSS purging)
+# hugo_stats.json
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo

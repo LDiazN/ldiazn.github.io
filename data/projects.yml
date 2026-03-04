@@ -1,5 +1,17 @@
 entries:
 
+  - title: Cube with a gun
+    url: https://github.com/LDiazN/thrill-cube
+    desc: A Unity project to showcase several game AI and procedural generation features in a third person shooter game, made with cubes!
+    img: https://github.com/user-attachments/assets/02f15910-3f92-47bc-97ac-3b5ceb9cf572
+    date: April 2025
+    tags:
+      - Unity
+      - C#
+      - Procedural Generation
+      - AI
+      - Gameplay Programming
+
   - title: PPHD8 Extract
     url: https://github.com/LDiazN/pphd8extract
     desc: A tool written in rust to extract .VAG audio files from PPHD8 files, an audio file format for old Play Station consoles
