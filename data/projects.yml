@@ -61,6 +61,18 @@ entries:
       - C++
       - Compilers Programing
 
+  - title: "Global Game Jam 2025: A todo gas"
+    url: https://shuxyzz.itch.io/a-todo-gas
+    desc: Help this kid to reach the bathroom at the other side of the pool before it's too late! This was my entry for the global game jam 2025 that I participated in Málaga, Spain. I worked on <strong>gameplay programming</strong>, simple enemy <strong>AI</strong>, visual effects and <strong>shaders!</strong>
+    img: /assets/images/a-todo-gas/a_todo_gas_menu.png 
+    date: Feb. 2025
+    tags: 
+      - Unity
+      - C#
+      - Global Game Jam
+      - Shaders
+      - VFX
+
   - title: "Global Game Jam 2021: Boo Forest"
     url: https://globalgamejam.org/2021/games/boo-forest-4
     desc: Help a kitten lost in the woods, full of terrors, find its way out! You play as a friendly ghost guiding the kitten through puzzle-based levels. This game was our entry for the Global Game Jam 2021.
