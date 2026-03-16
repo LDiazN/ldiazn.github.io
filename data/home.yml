@@ -1,0 +1,11 @@
+navbar_entries:
+  - title: home
+    url: /
+  - title: blog
+    url: blog
+  - title: projects
+    url: projects
+  - title: about
+    url: about
+
+footer_entries: []

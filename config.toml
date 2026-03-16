@@ -42,3 +42,8 @@ theme = "ldiazn-mono"
 
 # No tag/category list pages
 disableKinds = ["taxonomy", "taxonomyTerm"]
+
+# Allow raw HTML in markdown (e.g. divs, inline styles in content)
+[markup]
+  [markup.goldmark.renderer]
+    unsafe = true

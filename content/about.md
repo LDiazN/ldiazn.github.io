@@ -20,7 +20,7 @@ I'm a **graduate Computer Engineer** with a passion for software engineering, ga
 
 _October 2024 - January 2026_
 
-## Bachelor's Degree
+## Bachelor's Degree: Computer Science
 
 **University**: Universidad Simón Bolívar  (Caracas, Venezuela)
 
@@ -33,9 +33,17 @@ systems, calculus, linear algebra.
 
 *April 2016 - July 2023*
 
+-----
+
 # Experience
 
+## Backend Engineer: Venezuela Inteligente
+
+I built a **Django** backend for a news app that scraped links from a variety of news and podcast websites and displayed them to users of the app using a VPN to circumvent government censorship in Venezuela
+• The app provided easy access to curated news to thousands of users in Venezuela during trying times
+
 ## Data Engineering Intern 
+
 <div style="display: flex; justify-content: space-between;">
 <strong> Code for Venezuela </strong>  <i> <small> April 2021 - Jan. 2022 </small> </i> 
 </div>
@@ -46,65 +54,41 @@ I created a news classifier tool using **Python** and **HuggingFace's transforme
 
 # Skills
 
-<div style="display: flex; justify-content: space-between;">
-    <div> 
-        <h3> Programming Languages </h3> 
-        <ul style="list-style-type: none; padding: 0;">
-            <li>
-            <strong> 5 years: </strong> Python
-            </li>
-            <li>
-            <strong> 4 years: </strong> C++
-            </li>
-            <li>
-            <strong> 3 years: </strong> Rust, C#, JavaScript
-            </li>
-            <li>
-            <strong> 2 years: </strong> Haskell
-            </li>
-            <li>
-            <strong> ≤ 1 years: </strong> Rust, C#, JavaScript
-            </li>
-        </ul>
-    </div>  
-    <div> 
-        <h3> Tech Stacks </h3> 
-        <div>
-        Bootstrap, HTML, CSS, <br> JQuery, Django, 
-        <br> Django Rest Framework, <br> PyTorch, OpenCV, Transformers, <br>
-        MediaPipe, StreamLit, <br> SQL (PostgreSQL), <br>
-        Google Cloud Platform (GCP), <br> Unix/Bash, Linux, Docker <br>
-        </div>
-    </div> 
-</div>
-
-<div style="display: flex; justify-content: space-between;">
-    <div> 
-        <h3> Gamedev </h3> 
-        <ul style="list-style-type: none; padding: 0;">
-            <li>
-            <strong> 3 years: </strong> Unity, Godot
-            </li>
-            <li>
-            <strong> 2 years: </strong> Unreal
-            </li>
-            <li>
-            <strong> ≤ 1 years: </strong> Computer Graphics
-            </li>
-        </ul>
-    </div>  
-    <div> 
-        <h3> Languages </h3> 
-        <ul style="list-style-type: none; padding: 0;">
-            <li>
-            <strong> Spanish: </strong> Native
-            </li>
-            <li>
-            <strong> English: </strong> Full professional proficiency
-            </li>
-        </ul>
-    </div> 
-</div>
+<table style="width: 100%; border: none; border-collapse: collapse; table-layout: fixed;">
+<tr style="vertical-align: top;">
+<td style="border: none; width: 50%; padding-right: 2em;">
+<strong>Programming Languages</strong>
+<ul style="list-style: none; padding: 0; margin: 0.25em 0 0 0; line-height: 1.4;">
+<li><strong>5 years:</strong> Python</li>
+<li><strong>4 years:</strong> C++</li>
+<li><strong>3 years:</strong> Rust, C#, JavaScript</li>
+<li><strong>2 years:</strong> Haskell</li>
+<li><strong>≤ 1 year:</strong> Rust, C#, JavaScript</li>
+</ul>
+</td>
+<td style="border: none; width: 50%;">
+<strong>Tech Stacks</strong>
+<p style="margin: 0.25em 0 0 0; line-height: 1.35;">Bootstrap, HTML, CSS, JQuery, Django, Django Rest Framework, PyTorch, OpenCV, Transformers, MediaPipe, StreamLit, SQL (PostgreSQL), Google Cloud Platform (GCP), Unix/Bash, Linux, Docker</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td style="border: none; width: 50%; padding-right: 2em; padding-top: 1em;">
+<strong>Gamedev</strong>
+<ul style="list-style: none; padding: 0; margin: 0.25em 0 0 0; line-height: 1.4;">
+<li><strong>3 years:</strong> Unity, Godot</li>
+<li><strong>2 years:</strong> Unreal</li>
+<li><strong>≤ 1 year:</strong> Computer Graphics</li>
+</ul>
+</td>
+<td style="border: none; width: 50%; padding-top: 1em;">
+<strong>Languages</strong>
+<ul style="list-style: none; padding: 0; margin: 0.25em 0 0 0; line-height: 1.4;">
+<li><strong>Spanish:</strong> Native</li>
+<li><strong>English:</strong> Full professional proficiency</li>
+</ul>
+</td>
+</tr>
+</table>
 
 # Awards
 
