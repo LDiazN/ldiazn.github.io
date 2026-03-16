@@ -39,9 +39,24 @@ systems, calculus, linear algebra.
 
 ## Backend Engineer 
 
-<div style="display: flex; justify-content: space-between;">
-<strong> Venezuela Inteligente </strong>  <i> <small> Jun 2022 - Jan. 2025 </small> </i> 
-</div>
+<table style="width: 100%; border: none; border-collapse: collapse;"><tr><td style="border: none;"><strong>OONI (Open Observatory of Network Interference)</strong></td><td style="border: none; text-align: right;"><em>Jan 2025 – Today</em></td></tr></table>
+
+Ported legacy code from a monolith in Flask to a microservice architecture using Fast API.
+
+Developed a custom monitoring solution to integrate ECS services monitoring with the existent monolith monitoring with Prometheus.
+
+Used data analysis to understand possible security issues and detect faulty network measurement data to guide the development of our anonymous credential system.
+
+I created Python bindings for a Rust library implementing an anoymous credentials protocol for our Backend
+
+I made several custom HTTP servers for implementing internet connectivity experiments 
+
+**Tech & tools**: Python, Fast API, Terraform, Ansible, AWS, Docker, Prometheus, Grafana, Rust
+
+
+## Backend Engineer 
+
+<table style="width: 100%; border: none; border-collapse: collapse;"><tr><td style="border: none;"><strong>Venezuela Inteligente</strong></td><td style="border: none; text-align: right;"><em>Jun 2022 – Jan. 2025</em></td></tr></table>
 
 I built a **Django** backend for a news app that scraped links from a variety of news and podcast websites and displayed them to users of the app using a VPN to circumvent government censorship in Venezuela
 
@@ -51,9 +66,7 @@ The app provided easy access to curated news to thousands of users in Venezuela 
 
 ## Data Engineering Intern 
 
-<div style="display: flex; justify-content: space-between;">
-<strong> Code for Venezuela </strong>  <i> <small> April 2021 - Jan. 2022 </small> </i> 
-</div>
+<table style="width: 100%; border: none; border-collapse: collapse;"><tr><td style="border: none;"><strong>Code for Venezuela</strong></td><td style="border: none; text-align: right;"><em>April 2021 – Jan. 2022</em></td></tr></table>
 
 I created a news classifier tool using **Python** and **HuggingFace's transformers** for **Natural Language Processing**. Its purpose was to find issues with public services in Venezuela that were otherwise non-registered. This project taught me about software development best practices, machine learning with Python for natural language processing (NLP), deploying applications in **Google Cloud Platform** and how to use Data Engineering workflows. The goal of this project was to identify the most important issues on public services so that efforts could be directed toward solving them. You can find the library that was developed for this project **[here!](https://github.com/code-for-venezuela/c4v-py)**
 
