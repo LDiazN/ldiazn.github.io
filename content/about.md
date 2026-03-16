@@ -37,10 +37,17 @@ systems, calculus, linear algebra.
 
 # Experience
 
-## Backend Engineer: Venezuela Inteligente
+## Backend Engineer 
+
+<div style="display: flex; justify-content: space-between;">
+<strong> Venezuela Inteligente </strong>  <i> <small> Jun 2022 - Jan. 2025 </small> </i> 
+</div>
 
 I built a **Django** backend for a news app that scraped links from a variety of news and podcast websites and displayed them to users of the app using a VPN to circumvent government censorship in Venezuela
-• The app provided easy access to curated news to thousands of users in Venezuela during trying times
+
+The app provided easy access to curated news to thousands of users in Venezuela during trying times
+
+**Tech & tools**: Docker, Python, Django, REST Framework, AWS, Linux
 
 ## Data Engineering Intern 
 
@@ -57,7 +64,7 @@ I created a news classifier tool using **Python** and **HuggingFace's transforme
 <table style="width: 100%; border: none; border-collapse: collapse; table-layout: fixed;">
 <tr style="vertical-align: top;">
 <td style="border: none; width: 50%; padding-right: 2em;">
-<strong>Programming Languages</strong>
+<strong style="color: var(--neon-orange);">Programming Languages</strong>
 <ul style="list-style: none; padding: 0; margin: 0.25em 0 0 0; line-height: 1.4;">
 <li><strong>5 years:</strong> Python</li>
 <li><strong>4 years:</strong> C++</li>
@@ -67,13 +74,13 @@ I created a news classifier tool using **Python** and **HuggingFace's transforme
 </ul>
 </td>
 <td style="border: none; width: 50%;">
-<strong>Tech Stacks</strong>
-<p style="margin: 0.25em 0 0 0; line-height: 1.35;">Bootstrap, HTML, CSS, JQuery, Django, Django Rest Framework, PyTorch, OpenCV, Transformers, MediaPipe, StreamLit, SQL (PostgreSQL), Google Cloud Platform (GCP), Unix/Bash, Linux, Docker</p>
+<strong style="color: var(--neon-orange);">Tech Stacks</strong>
+<p style="margin: 0.25em 0 0 0; line-height: 1.35;">Django, Django Rest Framework, PyTorch,  StreamLit, SQL (PostgreSQL), Google Cloud Platform (GCP), Unix/Bash, Linux, Docker, Fast API, Ansible, Terraform</p>
 </td>
 </tr>
 <tr style="vertical-align: top;">
 <td style="border: none; width: 50%; padding-right: 2em; padding-top: 1em;">
-<strong>Gamedev</strong>
+<strong style="color: var(--neon-orange);">Gamedev</strong>
 <ul style="list-style: none; padding: 0; margin: 0.25em 0 0 0; line-height: 1.4;">
 <li><strong>3 years:</strong> Unity, Godot</li>
 <li><strong>2 years:</strong> Unreal</li>
@@ -81,7 +88,7 @@ I created a news classifier tool using **Python** and **HuggingFace's transforme
 </ul>
 </td>
 <td style="border: none; width: 50%; padding-top: 1em;">
-<strong>Languages</strong>
+<strong style="color: var(--neon-orange);">Languages</strong>
 <ul style="list-style: none; padding: 0; margin: 0.25em 0 0 0; line-height: 1.4;">
 <li><strong>Spanish:</strong> Native</li>
 <li><strong>English:</strong> Full professional proficiency</li>
