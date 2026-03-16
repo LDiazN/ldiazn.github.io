@@ -9,6 +9,19 @@ I'm a **graduate Computer Engineer** with a passion for software engineering, ga
 
 # Education
 
+## Master's Degree: Video games design and development
+
+
+**University**: Málaga University (Málaga, Spain)
+
+**Relevant Coursework**: Gameplay programming, AI for vide games, graphics programming and shaders, Unity engine, Unreal Engine, game design
+
+**GPA**: 9.2/10
+
+_October 2024 - January 2026_
+
+## Bachelor's Degree
+
 **University**: Universidad Simón Bolívar  (Caracas, Venezuela)
 
 **Major**: Bachelor of Science in Computer Engineering
