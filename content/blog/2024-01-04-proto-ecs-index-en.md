@@ -38,3 +38,4 @@ I will update this section from time to time whenever I write a new article abou
 * [*2024-01-05*] [Introduction]({{< ref "blog/2024-01-05-proto-ecs-intro-en" >}})
 * [*2024-02-05*] [Data types registration in Rust]({{< ref "blog/2024-02-05-proto-ecs-registration-en" >}})
 * [*2024-05-13*] [Memory Allocators]({{< ref "blog/2024-05-13-proto-ecs-memory-allocation-en" >}})
+* [*2024-05-13*] [The render API]({{< ref "blog/2024-12-22-proto-ecs-the-render-api-en" >}})
