@@ -2,7 +2,7 @@
 title: "[proto-ecs] Entity Allocator" 
 author: Luis Diaz
 tags: [Rust, Game Engine, proto-ecs]
-thumbnail: https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Rust_programming_language_black_logo.svg/2048px-Rust_programming_language_black_logo.svg.png
+thumbnail: https://upload.wikimedia.org/wikipedia/commons/d/d5/Rust_programming_language_black_logo.svg
 description: A thorough explanation of how we implemented entity allocation in Rust. We start with simple Generational Indices, and we explore several interesting Rust features to implement a complete entity allocator!
 language: en
 repo: https://github.com/LDiazN/example-allocators

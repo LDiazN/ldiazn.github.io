@@ -1,5 +1,4 @@
 entries:
-
   - title: Cube with a gun
     url: https://github.com/LDiazN/thrill-cube
     desc: A Unity project to showcase several game AI and procedural generation features in a third person shooter game, made with cubes!
@@ -64,9 +63,9 @@ entries:
   - title: "Global Game Jam 2025: A todo gas"
     url: https://shuxyzz.itch.io/a-todo-gas
     desc: Help this kid to reach the bathroom at the other side of the pool before it's too late! This was my entry for the global game jam 2025 that I participated in Málaga, Spain. I worked on <strong>gameplay programming</strong>, simple enemy <strong>AI</strong>, visual effects and <strong>shaders!</strong>
-    img: /assets/images/a-todo-gas/a_todo_gas_menu.png 
+    img: /assets/images/a-todo-gas/a_todo_gas_menu.png
     date: Feb. 2025
-    tags: 
+    tags:
       - Unity
       - C#
       - Global Game Jam
@@ -106,7 +105,7 @@ entries:
   - title: Multi Layer Perceptron
     url: https://github.com/LDiazN/rust_perceptron_example
     desc: This was a simple experiment to learn Rust in which I implemented a basic multi-layer perceptron. I then used this perceptron to test classification on the MNIST dataset, achieving 78% accuracy in the best case.
-    img: https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Rust_programming_language_black_logo.svg/2048px-Rust_programming_language_black_logo.svg.png
+    img: https://upload.wikimedia.org/wikipedia/commons/d/d5/Rust_programming_language_black_logo.svg
     date: Dec. 2021
     tags:
       - Rust
@@ -115,8 +114,9 @@ entries:
 highlight:
   title: Armor Blasting
   url: https://github.com/LDiazN/ArmorBlasting
-  desc: Shoot at the armored robot to blast its armor and see through it! In this <strong>UE4 project</strong> I showcase dynamic damage over meshes triggered by
-        player attacks in real time, achieving a very satisfying feeling of impact for the guns! Check the code on <strong> Github </strong>!
+  desc:
+    Shoot at the armored robot to blast its armor and see through it! In this <strong>UE4 project</strong> I showcase dynamic damage over meshes triggered by
+    player attacks in real time, achieving a very satisfying feeling of impact for the guns! Check the code on <strong> Github </strong>!
   img: https://user-images.githubusercontent.com/41093870/257398116-ddd9b1ce-a067-4fad-af30-46312bd93ec7.gif
   img_alt: A gif of an FPS game where the player is shooting a robot, blasting its armor
   tags:

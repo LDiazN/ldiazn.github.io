@@ -2,7 +2,7 @@
 title: "[proto-ecs] Data types registration in Rust" 
 author: Luis Diaz
 tags: [Rust, Game Engine, proto-ecs]
-thumbnail: https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Rust_programming_language_black_logo.svg/2048px-Rust_programming_language_black_logo.svg.png
+thumbnail: https://upload.wikimedia.org/wikipedia/commons/d/d5/Rust_programming_language_black_logo.svg
 description: "When you write a game engine, you usually want to allow users to create custom data types to implement behavior. And sometimes you need some sort of reflection system to collect some metadata about those new data types. In languages with limited reflection features like Rust and C++, this can be quite a challenge. In this article, I will explain how we approached this problem using macros in Rust in proto-ecs"
 language: en
 repo: https://github.com/LDiazN/example-registration
