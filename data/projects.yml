@@ -1,4 +1,15 @@
 entries:
+  - title: "Ubox: Minecraft-like terrain generation"
+    url: https://github.com/LDiazN/ubox
+    desc: A Unity project implementing a simple voxel engine for a Minecraft-like game.
+    img: https://github.com/user-attachments/assets/6e5aaa86-032b-49b6-8e58-6d79c485d247
+    date: April 2025
+    tags:
+      - Unity
+      - C#
+      - Procedural Generation
+      - Parallel programming
+
   - title: Cube with a gun
     url: https://github.com/LDiazN/thrill-cube
     desc: A Unity project to showcase several game AI and procedural generation features in a third person shooter game, made with cubes!
