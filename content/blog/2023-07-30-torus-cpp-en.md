@@ -11,6 +11,7 @@ es_version: true
 
 
 <br>
+    
 ![A spinning torus on a terminal, using ASCII art](/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif)
 
 When I was starting to learn how to code I came across [donut.c](https://www.a1k0n.net/2011/07/20/donut-math.html), a program written by 

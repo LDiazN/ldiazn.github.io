@@ -436,6 +436,16 @@ pre {
     overflow-x: auto;
     margin: var(--line-height) 0;
     overflow-y: hidden;
+    line-height: 1.3;
+}
+
+/* Chroma wraps each highlighted line in its own display:flex span so it can
+   align line numbers. Since that span's content ends with a literal newline,
+   the flex layout renders it as an extra empty row per line. Forcing the
+   wrapper back to inline lets the trailing newline behave like a normal
+   line break instead of an extra blank line. */
+pre code > span {
+    display: inline !important;
 }
 
 pre,
