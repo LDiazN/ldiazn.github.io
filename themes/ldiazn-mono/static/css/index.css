@@ -619,23 +619,23 @@ ul.nav-list li {
     padding-bottom: var(--blog-list-date-row-padding);
     border-bottom-width: calc(var(--border-thickness) * 2);
 }
-/* Image cell: white background, content centered vertically; override .blog-list-table td */
+/* Image cell: framed by the cell's own border, filled with the same solid
+   grey as that border (not a translucent wash) so dark-background PNGs still
+   read against it; opaque, so it's safe to repeat on the cell and the img */
 .blog-list-table td.blog-entry-img {
     width: 1%;
     min-width: 120px;
     padding: 0 !important;
     vertical-align: middle;
-    background: var(--img-bg);
-}
-.blog-entry-img-wrap {
-    padding: calc(var(--line-height) / 2);
-    background: var(--img-bg);
+    background: #aaa4;
 }
 .blog-entry-img img {
     display: block;
     max-width: 160px;
     width: 100%;
     height: auto;
+    padding: 0;
+    background: transparent;
 }
 .blog-entry-img a {
     text-decoration: none;
