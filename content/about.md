@@ -8,6 +8,8 @@ Venezuela. I'm passionate about software engineering, computer graphics, and
 game development. On this blog, you'll find the projects I work on and things
 I find interesting!
 
+I'm currently living in Málaga, Spain.
+
 # Education
 
 ## Master's Degree: Video games design and development
