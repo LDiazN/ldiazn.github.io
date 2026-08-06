@@ -550,6 +550,23 @@ li {
     padding: 0;
 }
 
+/* Nested lists sit inside an li with no margin of its own; without this the
+   outer ul/ol rule's bottom margin has nowhere to collapse but into a big
+   gap before the next top-level item */
+li > ul,
+li > ol {
+    margin: 0;
+}
+
+/* "Loose" markdown lists (blank line between items) make goldmark wrap each
+   li's content in <p>, which then carries the normal prose margin/indent
+   (var(--line-height) top and bottom, 2ch text-indent) — that's what blows
+   up spacing inside a list. Flatten it back down to tight-list spacing. */
+li > p {
+    margin: 0;
+    text-indent: 0;
+}
+
 ul.nav-list {
     list-style: none;
     padding: 0;
