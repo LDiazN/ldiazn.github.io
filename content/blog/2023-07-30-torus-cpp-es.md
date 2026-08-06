@@ -8,7 +8,7 @@ language: es
 repo: https://github.com/LDiazN/torus.cpp
 en_version: true
 ---
-<br>
+
 ![Toroide que gira en una terminal, usando arte ASCII](/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif)
 
 Cuando estaba aprendiendo a programar me topé con [donut.c](https://www.a1k0n.net/2011/07/20/donut-math.html), un programa escrito en C por **Andy Sloane**. Su objetivo era renderizar una dona girando aleatoriamente en el espacio en la terminal usando C ofuscado, incluso su código tiene forma de dona:
