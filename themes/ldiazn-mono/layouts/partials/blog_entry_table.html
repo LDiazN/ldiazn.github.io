@@ -32,6 +32,6 @@
 <tr class="blog-entry-row-last">
   <td class="width-min">tags</td>
   <td class="width-auto blog-entry-tags-value">
-    {{ with $page.Params.tags }}{{ range . }}<mark>{{ . }}</mark> {{ end }}{{ else }}—{{ end }}
+    {{ with $page.Params.tags }}{{ range . }}<mark class="tag">{{ . }}</mark> {{ end }}{{ else }}—{{ end }}
   </td>
 </tr>

@@ -20,6 +20,7 @@
     --neon-green-dim: #5c9c00;
     --neon-orange: #fb923c;
     --neon-orange-dim: #ea580c;
+    --neon-orange-dimmer: #ea580caa;
     --neon-muted: #9ee635;
     --color-bold: #ee4c67;
     /* Inline code (single-backtick): dark orange bg, light orange text */
@@ -515,6 +516,17 @@ mark {
     background: rgba(251, 146, 60, 0.2);
     color: var(--neon-orange);
     padding: 0 0.25em;
+}
+
+/* Tag chips (project/blog metadata) — smaller and outlined instead of the
+   bold orange fill used for in-text ==highlights==, so the two don't compete */
+mark.tag {
+    font-size: 0.8em;
+    line-height: 1.4;
+    background: transparent;
+    border: var(--border-thickness) solid var(--neon-orange-dimmer);
+    color: var(--neon-orange-dimmer);
+    padding: 0 0.4em;
 }
 
 ul,

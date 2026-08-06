@@ -15,15 +15,15 @@
       <h3><a href="{{ $item.url }}" {{ if $external }}target="_blank" rel="noopener"{{ end }}>{{ $item.title }}</a></h3>
     </td>
   </tr>
-  {{ with $item.tags }}
-  <tr>
-    <td class="width-min">tags</td>
-    <td class="width-auto">{{ range . }}<mark>{{ . }}</mark> {{ end }}</td>
-  </tr>
-  {{ end }}
   <tr>
     <td colspan="2">{{ $item.desc | safeHTML }}</td>
   </tr>
+  {{ with $item.tags }}
+  <tr>
+    <td class="width-min">tags</td>
+    <td class="width-auto">{{ range . }}<mark class="tag">{{ . }}</mark> {{ end }}</td>
+  </tr>
+  {{ end }}
   {{ with $item.date }}
   <tr>
     <td class="width-min">date</td>
