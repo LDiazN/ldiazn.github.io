@@ -1,11 +1,12 @@
 ---
 title: About Me
 ---
-
-Hi I am **Luis Diaz** 👋,
-
-I'm a **graduate Computer Engineer** with a passion for software engineering, game development and entertainment technology. I love coding in **C++**, **C#**, and **Rust** for game development and graphics programming related subjects. Additionally, I am interested in **machine learning** and **backend development**, as I have work experience in those areas. I participate in the Global Game Jam in my country almost every year. I am particularly interested in engine, graphics, and gameplay programming. I am always happy to learn and share the projects I am working on!
-
+I'm a computer engineer currently working as an Open Source developer at
+<a href="https://ooni.org/">OONI</a>, where I mostly do backend work. I have a
+<strong>B.S. in Computer Science</strong> from Universidad Simón Bolívar in
+Venezuela. I'm passionate about software engineering, computer graphics, and
+game development. On this blog, you'll find the projects I work on and things
+I find interesting!
 
 # Education
 

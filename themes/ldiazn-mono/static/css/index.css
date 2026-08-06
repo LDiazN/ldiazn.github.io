@@ -306,16 +306,14 @@ th {
     display: inline-flex;
     align-items: center;
     text-decoration: none;
-    transition:
-        opacity 0.2s ease,
-        transform 0.2s ease;
+    transition: opacity 0.2s ease;
     vertical-align: baseline;
 }
 .language-link-current {
     cursor: default;
 }
 .language-link-current .flag-icon {
-    font-size: 2rem;
+    font-size: 1.5rem;
     opacity: 1;
     filter: none;
     line-height: 1;
@@ -326,7 +324,6 @@ th {
 .language-link-alt:hover,
 .language-link-alt:focus {
     opacity: 0.8;
-    transform: scale(1.1);
 }
 .language-link-alt .flag-icon {
     font-size: 1.5rem;
@@ -367,8 +364,8 @@ footer {
     right: 2rem;
     width: 3rem;
     height: 3rem;
-    background: var(--neon-green);
-    color: var(--background-color);
+    background: transparent;
+    color: var(--neon-green);
     border: var(--border-thickness) solid var(--neon-green);
     cursor: pointer;
     display: flex;
@@ -379,8 +376,8 @@ footer {
     transition:
         opacity 0.3s ease,
         visibility 0.3s ease,
-        transform 0.2s ease,
-        background-color 0.2s ease;
+        background-color 0.2s ease,
+        color 0.2s ease;
     z-index: 1000;
     padding: 0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -391,9 +388,9 @@ footer {
 }
 .scroll-to-top:hover,
 .scroll-to-top:focus {
-    background: var(--neon-green-dim);
-    border-color: var(--neon-green-dim);
-    transform: scale(1.1);
+    background: var(--neon-green);
+    color: var(--background-color);
+    border-color: var(--neon-green);
     outline: none;
 }
 .scroll-to-top svg {

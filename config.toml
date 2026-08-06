@@ -15,7 +15,14 @@ disableKinds = ["taxonomy", "term"]
   github_url = "https://github.com/ldiazn"
   linkedin_url = "https://www.linkedin.com/in/ldiazn-cs"
   twitter_url = "https://twitter.com/Luduz98"
-  description = "Hi! My name is Luis Diaz, I'm a Computer Engineer and I'm passionate about science, technology, video games, visual arts and software engineering. I work professionally as a software developer and I'm also interested in Game Technology, Computer Graphics, and 3D animation. Sometimes I also enjoy writing about things I do and find interesting. Visit my blog to learn more about my interests and explore my projects to see what I enjoy working on!"
+  description = """
+  I'm a computer engineer currently working as an Open Source developer at
+  <a href="https://ooni.org/">OONI</a>, where I mostly do backend work. I have a
+  <strong>B.S. in Computer Science</strong> from Universidad Simón Bolívar in
+  Venezuela. I'm passionate about software engineering, computer graphics, and
+  game development. On this blog, you'll find the projects I work on and things
+  I find interesting!
+  """
   show_navbar = true
   show_footer = true
   show_projects = true
