@@ -580,6 +580,8 @@ ul.nav-list li {
 .card-table-img img {
     display: block;
     width: 100%;
+    padding: 0;
+    background-color: transparent;
 }
 .card-table-img a {
     text-decoration: none;
