@@ -3,6 +3,9 @@ title = "Luis Diaz"
 author = "Luis Diaz"
 theme = "ldiazn-mono"
 
+# No tag/category list pages
+disableKinds = ["taxonomy", "term"]
+
 # Use date from filename (e.g. 2024-02-05-foo.md) when front matter has no date
 [frontmatter]
   date = [":filename", ":default"]
@@ -39,9 +42,6 @@ theme = "ldiazn-mono"
 
 [outputs]
   home = ["HTML", "RSS"]
-
-# No tag/category list pages
-disableKinds = ["taxonomy", "taxonomyTerm"]
 
 # Allow raw HTML in markdown (e.g. divs, inline styles in content)
 [markup]

@@ -1,6 +1,6 @@
 {{ $ctx := .ctx }}
 {{ $description := .Description }}
-{{ $navEntries := $ctx.Site.Data.home.navbar_entries }}
+{{ $navEntries := hugo.Data.home.navbar_entries }}
 {{ $navCount := 1 }}
 {{ if and $ctx.Site.Params.show_navbar $navEntries }}{{ $navCount = len $navEntries }}{{ end }}
 <header>

@@ -13,10 +13,10 @@
 {{ if .Site.Params.show_projects }}
   <a href="{{ "projects/" | relURL }}" style="text-decoration: none;"><h2>{{ .Site.Params.home.title_projects }}</h2></a>
   <p>Here are some of my most remarkable projects. You can see a full list <a href="{{ "projects/" | relURL }}">here</a>!</p>
-  {{ with .Site.Data.projects.highlight }}
+  {{ with hugo.Data.projects.highlight }}
     {{ partial "project_card_table.html" (dict "item" . "external" true) }}
   {{ end }}
-  {{ $projects := .Site.Data.projects.entries }}
+  {{ $projects := hugo.Data.projects.entries }}
   {{ $n := .Site.Params.home.n_projects | default 3 }}
   <div class="card-grid">
     {{ range first $n $projects }}
