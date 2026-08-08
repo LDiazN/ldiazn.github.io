@@ -86,12 +86,11 @@ I created a news classifier tool using **Python** and **HuggingFace's transforme
 <li><strong>4 years:</strong> C++</li>
 <li><strong>3 years:</strong> Rust, C#, JavaScript</li>
 <li><strong>2 years:</strong> Haskell</li>
-<li><strong>≤ 1 year:</strong> Rust, C#, JavaScript</li>
 </ul>
 </td>
 <td style="border: none; width: 50%;">
 <strong style="color: var(--neon-orange);">Tech Stacks</strong>
-<p style="margin: 0.25em 0 0 0; line-height: 1.35;">Django, Django Rest Framework, PyTorch,  StreamLit, SQL (PostgreSQL), Google Cloud Platform (GCP), Unix/Bash, Linux, Docker, Fast API, Ansible, Terraform</p>
+<p style="margin: 0.25em 0 0 0; line-height: 1.35;">Django, PyTorch, SQL (PostgreSQL), AWS, Google Cloud Platform (GCP), Unix/Bash, Linux, Docker, Fast API, Ansible, Terraform, Playfab</p>
 </td>
 </tr>
 <tr style="vertical-align: top;">
