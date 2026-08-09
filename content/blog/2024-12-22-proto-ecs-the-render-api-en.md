@@ -7,6 +7,7 @@ description: In this article, I'll share how we structured and implemented the R
 language: en
 repo: 
 es_version: false
+date: 2024-12-22
 ---
 
 ![The first 3D object we loaded and rendered. The version in this gif is using phong shading for debugging](/assets/images/proto-ecs/proto-ecs-first-render.gif)

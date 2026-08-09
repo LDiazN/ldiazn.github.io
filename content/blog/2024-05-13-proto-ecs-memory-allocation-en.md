@@ -7,6 +7,7 @@ description: A thorough explanation of how we implemented entity allocation in R
 language: en
 repo: https://github.com/LDiazN/example-allocators
 es_version: false
+date: 2024-05-13
 ---
 
 When you write a game engine, one of the most important tasks of the engine is **managing entities' lifetime:** allocation, destruction, registration, and general bookkeping. Creating new entities can be expensive, especially if more memory has to be allocated. In this article, I will explain how we implemented the **entity allocator** we use in **proto-ecs,** how we compared multiple approaches, and which one we ended up choosing.

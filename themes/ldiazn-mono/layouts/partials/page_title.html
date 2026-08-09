@@ -17,7 +17,7 @@
       {{ end }}
     {{ end }}
   {{ end }}
-  
+
   {{ if and $enPage $esPage }}
     <div class="language-links">
       {{ if eq $currentLang "en" }}
@@ -37,4 +37,10 @@
       {{ end }}
     </div>
   {{ end }}
+
+  {{ if not $page.Params.Date.IsZero }}
+  <span class="post-date">{{ $page.Params.Date.Format "Jan. 2, 2006" }}</span>
+  {{ end }}
+  <br>
+  {{ range $page.Params.Tags }}<mark class="tag">{{ . }}</mark> {{ end }}
 {{ end }}

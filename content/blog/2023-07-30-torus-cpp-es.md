@@ -7,6 +7,7 @@ description: "En este articulo explico en gran detalle mi implementación del pr
 language: es
 repo: https://github.com/LDiazN/torus.cpp
 en_version: true
+date: 2023-07-30
 ---
 
 ![Toroide que gira en una terminal, usando arte ASCII](/assets/images/torus-cpp/video_2023-05-07_22-19-17.gif)

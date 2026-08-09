@@ -7,6 +7,7 @@ description: "When you write a game engine, you usually want to allow users to c
 language: en
 repo: https://github.com/LDiazN/example-registration
 es_version: false
+date: 2024-02-05
 ---
 
 When you write a game engine, you usually want to allow users to create custom data types to implement behavior. And sometimes you need some sort of reflection system to collect some metadata about those new data types. Consider [Unreal Headers Tool](https://docs.unrealengine.com/5.0/en-US/unreal-header-tool-for-unreal-engine/) for example. In languages with limited reflection features like Rust and C++, this can be quite a challenge. In this article, I will explain how we approached this problem using macros in Rust for my hobby engine, [proto-ecs]({{< ref "blog/2024-01-04-proto-ecs-index-en" >}}).

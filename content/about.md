@@ -17,7 +17,7 @@ I'm currently living in Málaga, Spain.
 
 **University**: Málaga University (Málaga, Spain)
 
-**Relevant Coursework**: Gameplay programming, AI for vide games, graphics programming and shaders, Unity engine, Unreal Engine, game design
+**Relevant Coursework**: Gameplay programming, AI for video games, graphics programming and shaders, Unity engine, Unreal Engine, game design
 
 **GPA**: 9.2/10
 
@@ -50,9 +50,9 @@ Developed a custom monitoring solution to integrate ECS services monitoring with
 
 Used data analysis to understand possible security issues and detect faulty network measurement data to guide the development of our anonymous credential system.
 
-I created Python bindings for a Rust library implementing an anoymous credentials protocol for our Backend
+I created Python bindings for a Rust library implementing an anoymous credentials protocol for our Backend.
 
-I made several custom HTTP servers for implementing internet connectivity experiments 
+I made several custom HTTP servers for implementing internet connectivity experiments.
 
 **Tech & tools**: Python, Fast API, Terraform, Ansible, AWS, Docker, Prometheus, Grafana, Rust
 
@@ -61,9 +61,9 @@ I made several custom HTTP servers for implementing internet connectivity experi
 
 <table style="width: 100%; border: none; border-collapse: collapse;"><tr><td style="border: none;"><strong>Venezuela Inteligente</strong></td><td style="border: none; text-align: right;"><em>Jun 2022 – Jan. 2025</em></td></tr></table>
 
-I built a **Django** backend for a news app that scraped links from a variety of news and podcast websites and displayed them to users of the app using a VPN to circumvent government censorship in Venezuela
+I built a **Django** backend for a news app that scraped links from a variety of news and podcast websites and displayed them to users of the app using a VPN to circumvent government censorship in Venezuela.
 
-The app provided easy access to curated news to thousands of users in Venezuela during trying times
+The app provided easy access to curated news to thousands of users in Venezuela during trying times.
 
 **Tech & tools**: Docker, Python, Django, REST Framework, AWS, Linux
 

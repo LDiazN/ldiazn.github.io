@@ -289,15 +289,23 @@ th {
 
 /* Page title – first content below the header, on every page */
 .page-title {
-    margin: var(--line-height) 0 var(--line-height);
+    margin: var(--line-height) 0 0;
     font-size: 2rem;
-    line-height: calc(2 * var(--line-height));
+    line-height: 1.2;
     font-weight: var(--font-weight-heading);
     text-transform: uppercase;
 }
+.post-date {
+    display: inline-block;
+    margin-top: 0;
+    line-height: 1.2;
+    font-style: italic;
+    font-size: 0.875rem;
+    color: var(--text-color-alt);
+}
 .language-links {
-    margin-top: calc(var(--line-height) * 0.5);
-    margin-bottom: var(--line-height);
+    margin-top: 0;
+    margin-bottom: 0;
     display: flex;
     gap: 0.5rem;
     align-items: baseline;
