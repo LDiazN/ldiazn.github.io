@@ -5,7 +5,7 @@ tags:
   - Unity
   - C#
   - Mobile
-  - Playfab
+  - PlayFab
 thumbnail: /assets/images/banana-split/spinning_banana.gif
 description: "A simple mobile game with standard online game features: store, hard currency, soft currency, progression, scoreboard and more"
 language: en

@@ -291,13 +291,14 @@ th {
 .page-title {
     margin: var(--line-height) 0 0;
     font-size: 2rem;
-    line-height: calc(2 * var(--line-height));
+    line-height: 1.2;
     font-weight: var(--font-weight-heading);
     text-transform: uppercase;
 }
 .post-date {
     display: inline-block;
     margin-top: 0;
+    line-height: 1.2;
     font-style: italic;
     font-size: 0.875rem;
     color: var(--text-color-alt);
