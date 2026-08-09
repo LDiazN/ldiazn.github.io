@@ -39,7 +39,7 @@
   {{ end }}
 
   {{ if not $page.Params.Date.IsZero }}
-  <i><small>{{ $page.Params.Date.Format "Jan. 2, 2006" }}</small></i>
+  <span class="post-date">{{ $page.Params.Date.Format "Jan. 2, 2006" }}</span>
   {{ end }}
   <br>
   {{ range $page.Params.Tags }}<mark class="tag">{{ . }}</mark> {{ end }}

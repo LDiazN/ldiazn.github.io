@@ -295,6 +295,12 @@ th {
     font-weight: var(--font-weight-heading);
     text-transform: uppercase;
 }
+.post-date {
+    display: inline-block;
+    font-style: italic;
+    font-size: 0.875rem;
+    color: var(--text-color-alt);
+}
 .language-links {
     margin-top: calc(var(--line-height) * 0.5);
     margin-bottom: var(--line-height);
