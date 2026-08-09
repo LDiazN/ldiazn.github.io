@@ -1,6 +1,9 @@
 {{ $page := .Page }}
 {{ with .Title }}
 <h2 class="page-title">{{ . }}</h2>
+{{ if not $page.Params.Date.IsZero }}
+<i><small>{{ $page.Params.Date.Format "Jan. 2, 2006" }}</small></i>
+{{ end }}
 {{ end }}
 {{ if $page }}
   {{ $currentLang := $page.Params.language | default "en" }}
@@ -17,7 +20,7 @@
       {{ end }}
     {{ end }}
   {{ end }}
-  
+
   {{ if and $enPage $esPage }}
     <div class="language-links">
       {{ if eq $currentLang "en" }}
