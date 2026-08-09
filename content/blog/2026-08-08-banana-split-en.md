@@ -6,7 +6,7 @@ tags:
   - C#
   - Mobile
   - Playfab
-thumbnail: /assets/images/banana-split/banana_split.png
+thumbnail: /assets/images/banana-split/spinning_banana.gif
 description: "A simple mobile game with standard online game features: store, hard currency, soft currency, progression, scoreboard and more"
 language: en
 repo:
@@ -128,3 +128,9 @@ Consumables are loaded into the `PlayerStateManager` on first load. Since the us
 ![](/assets/images/banana-split/consumables.png)
 
 The consumable consumption is implemented on top of PlayFab's inventory API. 
+
+### Materials
+
+The main purpose of this project was learning about PlayFab, so I didn't spend too much time on the aesthetics of the game. However, I applied several matcap materials to various items to give it a quick good look, like the golden bananas, ruby berries and the regular bananas with a cartoon matcap. 
+
+<img src="/assets/images/banana-split/spinning_banana.gif" alt="Spinning banana" style="width: 40%; margin: 0 auto; padding: 0 0" />

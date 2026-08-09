@@ -7,6 +7,7 @@ description: In this article I explain in great detail my own implementation of 
 language: en
 repo: https://github.com/LDiazN/torus.cpp
 es_version: true
+date: 2023-07-30
 ---
 
 

@@ -7,6 +7,7 @@ description: In this project, I'm trying to implement a multithreaded game engin
 language: en
 repo: 
 es_version: false
+date: 2024-01-04
 ---
 
 **TL;DR:** This is an index for a series of articles where I document the progress in some key areas of a project I'm working on with a friend to implement a multithreaded game engine based on an interesting object model. 

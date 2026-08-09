@@ -7,6 +7,7 @@ description: In this post, I introduce the core concepts of our Rust Game Engine
 language: en
 repo: 
 es_version: false
+date: 2024-01-05
 ---
 
 In this article, I present the core concepts and motivations behind `proto-ecs`, a project I'm developing with a good friend of mine to learn Game Engine programming. If you want to learn more about the context of this project, please visit [this index post]({{< ref "blog/2024-01-04-proto-ecs-index-en" >}}) where I talk about it. 
