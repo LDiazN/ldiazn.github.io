@@ -114,6 +114,24 @@ I created a news classifier tool using **Python** and **HuggingFace's transforme
 
 # Awards
 
+### Dev Contest finalist 2026 
+
+The [Dev Contest](https://devcontest.net/) is a contest in Spain where students 
+submit a project under a common theme in different categories. I participated 
+in the programming category and this year's theme was a game with block-based 
+construction and procedural generation. 
+
+My entry was a [Minecraft-like game](https://github.com/LDiazN/ubox) with 
+infinite world generation. I heavily leveraged data parallelism and 
+multithreading to achieve great performance!
+
+<table style="width: 100%; border: none; border-collapse: collapse;">
+  <tr>
+    <td style="padding: 0; border: none; vertical-align: top; width: 50%;"><img src="/assets/images/dev-contest/dev_contest_2026.jpg" alt="Presenting Ubox at the Dev Contest" style="width: 100%; display: block;" /></td>
+    <td style="padding: 0; border: none; vertical-align: top; width: 50%;"><img src="/assets/images/dev-contest/dev_contest_2026_2.jpg" alt="Dev Contest finalists group photo" style="width: 100%; display: block;" /></td>
+  </tr>
+</table>
+
 ### 2nd Place ICPC 2019
 **The International Collegiate Programming Contest** (ICPC) is an algorithmic programming competition 
 for college students. Our team **placed 2nd** in Venezuela and 83rd in the North
